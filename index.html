@@ -106,7 +106,7 @@
         adminDashboard.classList.remove('hidden');
       } else {
         studentDashboard.classList.remove('hidden');
-        loadStudentQueue(); // load queue on login
+        (); // load queue on login
       }
       loginSection.classList.add('hidden');
     }
@@ -127,10 +127,10 @@
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) return;
     
+      // Get all rows globally, ordered by creation
       const { data, error: dbError } = await supabase
         .from('queue')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
     
       if (dbError) return console.error('Error loading queue:', dbError);
@@ -138,12 +138,18 @@
       const tbody = document.getElementById('student-queue');
       tbody.innerHTML = '';
     
-      data.forEach((row, index) => {
+      // Only show the current user's rows
+      const userRows = data.filter(row => row.user_id === user.id);
+    
+      userRows.forEach(row => {
+        // global position = index in all data + 1
+        const position = data.findIndex(r => r.id === row.id) + 1;
+    
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.file_name}</td>
           <td>${row.status}</td>
-          <td>${index + 1}</td>
+          <td>${position}</td>
         `;
         tbody.appendChild(tr);
       });
