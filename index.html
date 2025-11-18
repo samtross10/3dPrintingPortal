@@ -124,20 +124,20 @@
     };
 
     async function loadStudentQueue() {
-      const user = supabase.auth.user();
-      if (!user) return;
-
-      const { data, error } = await supabase
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return;
+    
+      const { data, error: dbError } = await supabase
         .from('queue')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
-
-      if (error) return console.error('Error loading queue:', error);
-
+    
+      if (dbError) return console.error('Error loading queue:', dbError);
+    
       const tbody = document.getElementById('student-queue');
       tbody.innerHTML = '';
-
+    
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
