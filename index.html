@@ -105,8 +105,10 @@
         const fileInput = document.getElementById('file-upload');
         if (!fileInput.files.length) return console.log('No file selected');
         const file = fileInput.files[0];
-        const user = supabase.auth.user();
-        if (!user) return console.log('User not logged in');
+    
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) return console.log('User not logged in');
     
         const filePath = `${user.id}/${file.name}`;
         console.log('Uploading file to path:', filePath);
@@ -116,10 +118,7 @@
     
         const { data, error } = await supabase.storage
           .from('stl-uploads')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
     
         if (error) {
           console.error('Storage upload error:', error);
@@ -130,7 +129,7 @@
         const { error: dbError } = await supabase
           .from('queue')
           .insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
-        
+    
         if (dbError) {
           console.error('Database insert error:', dbError);
           return;
@@ -144,7 +143,6 @@
         console.error('Unexpected error:', err);
       }
     };
-
 
     function showDashboard(email) {
       if (email.endsWith('@school.edu')) {
