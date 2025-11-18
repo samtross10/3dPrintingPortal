@@ -128,20 +128,35 @@
   .action-btn:hover { background: #5b3cd4; }
 
   .hidden { display: none; }
+  p { font-size: 0.9rem; margin-top: 0.5rem; }
+  a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
 <header>3D Printing Lab Portal</header>
 
+<!-- LOGIN SECTION -->
 <div id="login-section" class="container">
-  <h2>Login / Sign Up</h2>
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
+  <h2>Login</h2>
+  <input type="email" id="login-email" placeholder="Email" />
+  <input type="password" id="login-password" placeholder="Password" />
   <button id="login-btn">Login</button>
-  <button id="signup-btn">Sign Up</button>
+  <p>Don't have an account? <a id="show-signup">Sign up!</a></p>
 </div>
 
+<!-- SIGNUP SECTION -->
+<div id="signup-section" class="container hidden">
+  <h2>Sign Up</h2>
+  <input type="text" id="full-name" placeholder="Full Name" />
+  <input type="email" id="signup-email" placeholder="Email" />
+  <input type="password" id="signup-password" placeholder="Password" />
+  <button id="signup-btn">Sign Up</button>
+  <p>Already have an account? <a id="show-login">Login</a></p>
+</div>
+
+<!-- STUDENT DASHBOARD -->
 <div id="student-dashboard" class="container hidden">
   <h2>Your Uploads</h2>
   <input type="file" id="file-upload" accept=".stl" />
@@ -158,6 +173,7 @@
   <button id="logout-student">Logout</button>
 </div>
 
+<!-- ADMIN DASHBOARD -->
 <div id="admin-dashboard" class="container hidden">
   <h2>Admin Queue</h2>
   <table>
@@ -177,40 +193,51 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const loginSection = document.getElementById('login-section');
+const signupSection = document.getElementById('signup-section');
 const studentDashboard = document.getElementById('student-dashboard');
 const adminDashboard = document.getElementById('admin-dashboard');
-const loginBtn = document.getElementById('login-btn');
-const signupBtn = document.getElementById('signup-btn');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const uploadBtn = document.getElementById('upload-btn');
-const progressContainer = document.getElementById('progress-container');
-const progressFill = document.getElementById('progress-fill');
 
-loginBtn.onclick = async () => {
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({
-    email: emailInput.value,
-    password: passwordInput.value
-  });
+/* ----- LOGIN / SIGNUP TOGGLE ----- */
+document.getElementById('show-signup').onclick = e => {
+  e.preventDefault();
+  loginSection.classList.add('hidden');
+  signupSection.classList.remove('hidden');
+};
+document.getElementById('show-login').onclick = e => {
+  e.preventDefault();
+  signupSection.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+};
+
+/* ----- LOGIN ----- */
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return alert('Login failed: ' + error.message);
   showDashboard(user.email);
 };
 
-signupBtn.onclick = async () => {
-  const { data: { user }, error } = await supabase.auth.signUp({
-    email: emailInput.value,
-    password: passwordInput.value
-  });
+/* ----- SIGNUP ----- */
+document.getElementById('signup-btn').onclick = async () => {
+  const fullName = document.getElementById('full-name').value;
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+
+  const { data: { user }, error } = await supabase.auth.signUp({ email, password });
   if (error) return alert('Sign up failed: ' + error.message);
 
-  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
-    email: emailInput.value,
-    password: passwordInput.value
-  });
+  // Insert full name in profiles table
+  await supabase.from('profiles').insert([{ id: user.id, full_name: fullName }]);
+
+  // Auto-login
+  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
   if (loginError) return alert('Login failed: ' + loginError.message);
   showDashboard(loginUser.user.email);
 };
 
+/* ----- DASHBOARD ----- */
 function showDashboard(email) {
   if (email.endsWith('@school.edu')) {
     adminDashboard.classList.remove('hidden');
@@ -220,8 +247,10 @@ function showDashboard(email) {
     loadStudentQueue();
   }
   loginSection.classList.add('hidden');
+  signupSection.classList.add('hidden');
 }
 
+/* ----- LOGOUT ----- */
 document.getElementById('logout-student').onclick = async () => {
   await supabase.auth.signOut();
   studentDashboard.classList.add('hidden');
@@ -233,21 +262,19 @@ document.getElementById('logout-admin').onclick = async () => {
   loginSection.classList.remove('hidden');
 };
 
-/* ---------------- Student Queue ---------------- */
+/* ----- STUDENT QUEUE ----- */
 async function loadStudentQueue() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // fetch all rows to get global positions
   const { data: allData } = await supabase
     .from('queue')
-    .select('*')
+    .select('*, profiles(full_name)')
     .order('created_at', { ascending: true });
 
   const tbody = document.getElementById('student-queue');
   tbody.innerHTML = '';
 
-  // Filter to show only the student's rows
   allData.forEach((row, index) => {
     if (row.user_id !== user.id) return;
 
@@ -261,6 +288,11 @@ async function loadStudentQueue() {
   });
 }
 
+/* ----- UPLOAD ----- */
+const uploadBtn = document.getElementById('upload-btn');
+const progressContainer = document.getElementById('progress-container');
+const progressFill = document.getElementById('progress-fill');
+
 uploadBtn.onclick = async () => {
   const fileInput = document.getElementById('file-upload');
   if (!fileInput.files.length) return;
@@ -273,9 +305,7 @@ uploadBtn.onclick = async () => {
   progressContainer.style.display = 'block';
   progressFill.style.width = '0%';
 
-  const { error: storageError } = await supabase.storage
-    .from('stl-uploads')
-    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+  const { error: storageError } = await supabase.storage.from('stl-uploads').upload(filePath, file, { cacheControl: '3600', upsert: false });
   if (storageError) { console.error(storageError); return; }
 
   await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
@@ -286,11 +316,11 @@ uploadBtn.onclick = async () => {
   fileInput.value = '';
 };
 
-/* ---------------- Admin Queue ---------------- */
+/* ----- ADMIN QUEUE ----- */
 async function loadAdminQueue() {
   const { data: allData } = await supabase
     .from('queue')
-    .select('*')
+    .select('*, profiles(full_name)')
     .order('created_at', { ascending: true });
 
   const tbody = document.getElementById('admin-queue');
@@ -299,7 +329,7 @@ async function loadAdminQueue() {
   allData.forEach((row, index) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${row.user_id}</td>
+      <td>${row.profiles?.full_name || row.user_id}</td>
       <td>${row.file_name}</td>
       <td>
         <select data-id="${row.id}" class="status-select">
@@ -326,6 +356,7 @@ async function loadAdminQueue() {
   });
 }
 
+/* ----- DOWNLOAD ----- */
 window.downloadFile = async (userId, fileName) => {
   const { data, error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
   if (error) return console.error(error);
@@ -336,15 +367,6 @@ window.downloadFile = async (userId, fileName) => {
   a.click(); a.remove();
   URL.revokeObjectURL(url);
 };
-
-// Optional: add realtime updates
-supabase
-  .channel('public:queue')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
-    loadStudentQueue(); loadAdminQueue();
-  })
-  .subscribe();
-
 </script>
 </body>
 </html>
