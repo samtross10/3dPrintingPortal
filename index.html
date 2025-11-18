@@ -78,70 +78,27 @@
     const progressFill = document.getElementById('progress-fill');
 
     loginBtn.onclick = async () => {
-      const { data: user, error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: emailInput.value,
         password: passwordInput.value
       });
       if (error) return alert('Login failed: ' + error.message);
-      showDashboard(user.user.email);
+      showDashboard(user.email);
     };
 
     signupBtn.onclick = async () => {
-      const { data: user, error } = await supabase.auth.signUp({
+      const { data: { user }, error } = await supabase.auth.signUp({
         email: emailInput.value,
         password: passwordInput.value
       });
       if (error) return alert('Sign up failed: ' + error.message);
+
       const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
         email: emailInput.value,
         password: passwordInput.value
       });
       if (loginError) return alert('Login failed: ' + loginError.message);
       showDashboard(loginUser.user.email);
-    };
-
-    uploadBtn.onclick = async () => {
-      try {
-        const fileInput = document.getElementById('file-upload');
-        if (!fileInput.files.length) return console.log('No file selected');
-        const file = fileInput.files[0];
-    
-        // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.log('User not logged in');
-    
-        const filePath = `${user.id}/${file.name}`;
-        console.log('Uploading file to path:', filePath);
-    
-        progressContainer.style.display = 'block';
-        progressFill.style.width = '0%';
-    
-        const { data, error } = await supabase.storage
-          .from('stl-uploads')
-          .upload(filePath, file, { cacheControl: '3600', upsert: false });
-    
-        if (error) {
-          console.error('Storage upload error:', error);
-          return;
-        }
-        console.log('Upload complete:', data);
-    
-        const { error: dbError } = await supabase
-          .from('queue')
-          .insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
-    
-        if (dbError) {
-          console.error('Database insert error:', dbError);
-          return;
-        }
-        console.log('Added to queue');
-    
-        progressFill.style.width = '100%';
-        setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
-        fileInput.value = '';
-      } catch (err) {
-        console.error('Unexpected error:', err);
-      }
     };
 
     function showDashboard(email) {
@@ -166,42 +123,34 @@
     };
 
     uploadBtn.onclick = async () => {
-      const fileInput = document.getElementById('file-upload');
-      if (!fileInput.files.length) return alert('Please select a file to upload.');
-      const file = fileInput.files[0];
-      const user = supabase.auth.user();
-      if (!user) return alert('You must be logged in.');
-      const filePath = `${user.id}/${file.name}`;
+      try {
+        const fileInput = document.getElementById('file-upload');
+        if (!fileInput.files.length) return console.log('No file selected');
+        const file = fileInput.files[0];
 
-      progressContainer.style.display = 'block';
-      progressFill.style.width = '0%';
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) return console.log('User not logged in');
 
-      const upload = supabase.storage.from('stl-uploads').upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
-          progressFill.style.width = percent + '%';
-        }
-      });
+        const filePath = `${user.id}/${file.name}`;
+        console.log('Uploading file to path:', filePath);
 
-      const { data, error } = await upload;
-      if (error) {
-        alert('Upload failed: ' + error.message);
-        progressContainer.style.display = 'none';
-        return;
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+
+        const { data, error } = await supabase.storage.from('stl-uploads').upload(filePath, file, { cacheControl: '3600', upsert: false });
+        if (error) { console.error('Storage upload error:', error); return; }
+        console.log('Upload complete:', data);
+
+        const { error: dbError } = await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
+        if (dbError) { console.error('Database insert error:', dbError); return; }
+        console.log('Added to queue');
+
+        progressFill.style.width = '100%';
+        setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
+        fileInput.value = '';
+      } catch (err) {
+        console.error('Unexpected error:', err);
       }
-
-      const { error: dbError } = await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
-      if (dbError) {
-        alert('Failed to add to queue: ' + dbError.message);
-        progressContainer.style.display = 'none';
-        return;
-      }
-
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
-      fileInput.value = '';
     };
   </script>
 </body>
