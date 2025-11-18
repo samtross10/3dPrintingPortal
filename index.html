@@ -126,23 +126,29 @@
     async function loadStudentQueue() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) return;
-
-      // Fetch all rows globally
-      const { data, error: dbError } = await supabase
+    
+      // Fetch only the current user's rows for display
+      const { data: userData, error: userDataError } = await supabase
         .from('queue')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
-
-      if (dbError) return console.error('Error loading queue:', dbError);
-
+    
+      if (userDataError) return console.error('Error loading user queue:', userDataError);
+    
+      // Fetch all rows globally to calculate positions
+      const { data: allData, error: allDataError } = await supabase
+        .from('queue')
+        .select('id')
+        .order('created_at', { ascending: true });
+    
+      if (allDataError) return console.error('Error loading global queue:', allDataError);
+    
       const tbody = document.getElementById('student-queue');
       tbody.innerHTML = '';
-
-      // Show only current user's rows
-      const userRows = data.filter(row => row.user_id === user.id);
-
-      userRows.forEach(row => {
-        const position = data.findIndex(r => r.id === row.id) + 1; // global position
+    
+      userData.forEach(row => {
+        const position = allData.findIndex(r => r.id === row.id) + 1;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.file_name}</td>
