@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Print Portal</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; }
+    header { width: 100%; background: #2f4f90; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; }
+    .container { margin-top: 2rem; width: 90%; max-width: 600px; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .hidden { display: none; }
+    input, button { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
+    button { background: #2f4f90; color: white; border: none; cursor: pointer; }
+    button:hover { background: #1e3562; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    table th, table td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+    table th { background: #e6e6e6; }
+    #progress-container { margin-top: 1rem; display: none; }
+    #progress-bar { width: 100%; background: #ddd; border-radius: 6px; overflow: hidden; height: 20px; }
+    #progress-fill { height: 100%; width: 0%; background: #2f4f90; }
+  </style>
+</head>
+<body>
+  <header>3D Printing Portal</header>
+
+  <div id="login-section" class="container">
+    <h2>Login / Sign Up</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="login-btn">Login</button>
+    <button id="signup-btn">Sign Up</button>
+  </div>
+
+  <div id="student-dashboard" class="container hidden">
+    <h2>Your Uploads</h2>
+    <input type="file" id="file-upload" accept=".stl" />
+    <button id="upload-btn">Upload STL</button>
+    <div id="progress-container">
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+    <h3>Queue</h3>
+    <table>
+      <thead>
+        <tr><th>File</th><th>Status</th><th>Position</th></tr>
+      </thead>
+      <tbody id="student-queue"></tbody>
+    </table>
+    <button id="logout-student">Logout</button>
+  </div>
+
+  <div id="admin-dashboard" class="container hidden">
+    <h2>Admin Queue</h2>
+    <table>
+      <thead>
+        <tr><th>User</th><th>File</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="admin-queue"></tbody>
+    </table>
+    <button id="logout-admin">Logout</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const loginSection = document.getElementById('login-section');
+    const studentDashboard = document.getElementById('student-dashboard');
+    const adminDashboard = document.getElementById('admin-dashboard');
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const uploadBtn = document.getElementById('upload-btn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressFill = document.getElementById('progress-fill');
+
+    loginBtn.onclick = async () => {
+      const { data: user, error } = await supabase.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value
+      });
+      if (error) return alert('Login failed: ' + error.message);
+      showDashboard(user.user.email);
+    };
+
+    signupBtn.onclick = async () => {
+      const { data: user, error } = await supabase.auth.signUp({
+        email: emailInput.value,
+        password: passwordInput.value
+      });
+      if (error) return alert('Sign up failed: ' + error.message);
+      const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value
+      });
+      if (loginError) return alert('Login failed: ' + loginError.message);
+      showDashboard(loginUser.user.email);
+    };
+
+    function showDashboard(email) {
+      if (email.endsWith('@school.edu')) {
+        adminDashboard.classList.remove('hidden');
+      } else {
+        studentDashboard.classList.remove('hidden');
+      }
+      loginSection.classList.add('hidden');
+    }
+
+    document.getElementById('logout-student').onclick = async () => {
+      await supabase.auth.signOut();
+      studentDashboard.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    };
+
+    document.getElementById('logout-admin').onclick = async () => {
+      await supabase.auth.signOut();
+      adminDashboard.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    };
+
+    uploadBtn.onclick = async () => {
+      const fileInput = document.getElementById('file-upload');
+      if (!fileInput.files.length) return alert('Please select a file to upload.');
+      const file = fileInput.files[0];
+      const user = supabase.auth.user();
+      if (!user) return alert('You must be logged in.');
+      const filePath = `${user.id}/${file.name}`;
+
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+
+      const upload = supabase.storage.from('stl-uploads').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          progressFill.style.width = percent + '%';
+        }
+      });
+
+      const { data, error } = await upload;
+      if (error) {
+        alert('Upload failed: ' + error.message);
+        progressContainer.style.display = 'none';
+        return;
+      }
+
+      const { error: dbError } = await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
+      if (dbError) {
+        alert('Failed to add to queue: ' + dbError.message);
+        progressContainer.style.display = 'none';
+        return;
+      }
+
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
+      fileInput.value = '';
+    };
+  </script>
+</body>
+</html>
