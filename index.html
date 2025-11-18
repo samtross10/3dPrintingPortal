@@ -63,7 +63,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
+    const supabaseKey = 'YOUR_ANON_KEY_HERE'; // Replace with your Supabase anon key
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const loginSection = document.getElementById('login-section');
@@ -106,7 +106,7 @@
         adminDashboard.classList.remove('hidden');
       } else {
         studentDashboard.classList.remove('hidden');
-        (); // load queue on login
+        loadStudentQueue();
       }
       loginSection.classList.add('hidden');
     }
@@ -124,27 +124,25 @@
     };
 
     async function loadStudentQueue() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return;
-    
-      // Get all rows globally, ordered by creation
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) return;
+
+      // Fetch all rows globally
       const { data, error: dbError } = await supabase
         .from('queue')
         .select('*')
         .order('created_at', { ascending: true });
-    
+
       if (dbError) return console.error('Error loading queue:', dbError);
-    
+
       const tbody = document.getElementById('student-queue');
       tbody.innerHTML = '';
-    
-      // Only show the current user's rows
+
+      // Show only current user's rows
       const userRows = data.filter(row => row.user_id === user.id);
-    
+
       userRows.forEach(row => {
-        // global position = index in all data + 1
-        const position = data.findIndex(r => r.id === row.id) + 1;
-    
+        const position = data.findIndex(r => r.id === row.id) + 1; // global position
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.file_name}</td>
@@ -183,7 +181,7 @@
         if (dbError) { console.error('Database insert error:', dbError); return; }
         console.log('Added to queue');
 
-        loadStudentQueue(); // refresh queue after upload
+        loadStudentQueue(); // refresh after upload
 
         progressFill.style.width = '100%';
         setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
@@ -193,7 +191,7 @@
       }
     };
 
-    // Optional: Realtime updates for live queue refresh
+    // Optional: Realtime subscription for live updates
     supabase
       .channel('public:queue')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
