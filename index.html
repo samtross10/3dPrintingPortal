@@ -127,7 +127,6 @@ document.getElementById('signup-btn').onclick = async () => {
   const password = document.getElementById('signup-password').value;
   const { data: { user }, error } = await supabase.auth.signUp({ email, password });
   if (error) return alert('Sign up failed: ' + error.message);
-  // Insert into profiles
   await supabase.from('profiles').insert([{id: user.id, full_name: fullName}]);
   const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
   if (loginError) return alert('Login failed: ' + loginError.message);
@@ -148,24 +147,49 @@ document.getElementById('logout-admin').onclick = async () => { await supabase.a
 
 /* --- QUEUE FUNCTIONS --- */
 async function loadStudentQueue(){
-  const { data: allData, error } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
+  const { data: queueData, error } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
   if(error) return console.error(error);
   const tbody = document.getElementById('student-queue'); tbody.innerHTML='';
-  allData.forEach((row,index)=>{ if(row.user_id!==window.currentUserId) return;
+  queueData.forEach((row,index)=>{ if(row.user_id!==window.currentUserId) return;
     const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.file_name}</td><td class="status-${row.status}">${row.status}</td><td>${index+1}</td>`; tbody.appendChild(tr);
   });
 }
 
 async function loadAdminQueue(){
-  const { data: allData, error } = await supabase.from('queue').select('*, profiles(full_name)').order('created_at',{ascending:true});
-  if(error) return console.error(error);
+  // Fetch queue
+  const { data: queueData, error: queueError } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
+  if(queueError) return console.error(queueError);
+  // Fetch profiles
+  const { data: profilesData, error: profilesError } = await supabase.from('profiles').select('*');
+  if(profilesError) return console.error(profilesError);
+  // Merge data
+  const allData = queueData.map(q => ({
+    ...q,
+    full_name: profilesData.find(p=>p.id===q.user_id)?.full_name || q.user_id
+  }));
   const tbody = document.getElementById('admin-queue'); tbody.innerHTML='';
   allData.forEach((row,index)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${row.profiles?.full_name || row.user_id}</td><td>${row.file_name}</td><td><select data-id="${row.id}" class="status-select"><option value="pending" ${row.status==='pending'?'selected':''}>pending</option><option value="printing" ${row.status==='printing'?'selected':''}>printing</option><option value="done" ${row.status==='done'?'selected':''}>done</option></select></td><td>${index+1}</td><td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
+    tr.innerHTML=`<td>${row.full_name}</td>
+                  <td>${row.file_name}</td>
+                  <td>
+                    <select data-id="${row.id}" class="status-select">
+                      <option value="pending" ${row.status==='pending'?'selected':''}>pending</option>
+                      <option value="printing" ${row.status==='printing'?'selected':''}>printing</option>
+                      <option value="done" ${row.status==='done'?'selected':''}>done</option>
+                    </select>
+                  </td>
+                  <td>${index+1}</td>
+                  <td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
     tbody.appendChild(tr);
   });
-  document.querySelectorAll('.status-select').forEach(select=>{ select.onchange=async()=>{ await supabase.from('queue').update({status:select.value}).eq('id',select.dataset.id); loadAdminQueue(); }; });
+  // Status change handlers
+  document.querySelectorAll('.status-select').forEach(select=>{
+    select.onchange = async () => {
+      await supabase.from('queue').update({status: select.value}).eq('id', select.dataset.id);
+      loadAdminQueue();
+    };
+  });
 }
 
 /* --- REFRESH BUTTONS --- */
@@ -181,12 +205,11 @@ uploadBtn.onclick=async()=>{
   if(!fileInput.files.length) return;
   const file=fileInput.files[0];
   if(!window.currentUserId) return;
-  const { data: userProfile } = await supabase.from('profiles').select('*').eq('id',window.currentUserId).single();
   const filePath=`${window.currentUserId}/${file.name}`;
   progressContainer.style.display='block'; progressFill.style.width='0%';
   const { error: storageError } = await supabase.storage.from('stl-uploads').upload(filePath,file,{cacheControl:'3600',upsert:false});
   if(storageError) { console.error(storageError); return; }
-  await supabase.from('queue').insert([{user_id:window.currentUserId, file_name:file.name, status:'pending'}]);
+  await supabase.from('queue').insert([{user_id:window.currentUserId,file_name:file.name,status:'pending'}]);
   loadStudentQueue();
   progressFill.style.width='100%';
   setTimeout(()=>{ progressContainer.style.display='none'; progressFill.style.width='0%'; },800);
