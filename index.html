@@ -235,30 +235,27 @@ document.getElementById('logout-admin').onclick = async () => {
 
 /* ---------------- Student Queue ---------------- */
 async function loadStudentQueue() {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
+  // fetch all rows to get global positions
   const { data: allData } = await supabase
     .from('queue')
-    .select('id')
-    .order('created_at', { ascending: true });
-
-  const { data: userData } = await supabase
-    .from('queue')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: true });
 
   const tbody = document.getElementById('student-queue');
   tbody.innerHTML = '';
 
-  userData.forEach(row => {
-    const position = allData.findIndex(r => r.id === row.id) + 1;
+  // Filter to show only the student's rows
+  allData.forEach((row, index) => {
+    if (row.user_id !== user.id) return;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.file_name}</td>
       <td class="status-${row.status}">${row.status}</td>
-      <td>${position}</td>
+      <td>${index + 1}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -291,10 +288,7 @@ uploadBtn.onclick = async () => {
 
 /* ---------------- Admin Queue ---------------- */
 async function loadAdminQueue() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { data } = await supabase
+  const { data: allData } = await supabase
     .from('queue')
     .select('*')
     .order('created_at', { ascending: true });
@@ -302,8 +296,7 @@ async function loadAdminQueue() {
   const tbody = document.getElementById('admin-queue');
   tbody.innerHTML = '';
 
-  data.forEach(row => {
-    const position = data.findIndex(r => r.id === row.id) + 1;
+  allData.forEach((row, index) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.user_id}</td>
@@ -315,9 +308,9 @@ async function loadAdminQueue() {
           <option value="done" ${row.status==='done'?'selected':''}>done</option>
         </select>
       </td>
-      <td>${position}</td>
+      <td>${index + 1}</td>
       <td>
-        <button class="action-btn" data-id="${row.id}" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button>
+        <button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button>
       </td>
     `;
     tbody.appendChild(tr);
