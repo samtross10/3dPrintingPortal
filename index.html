@@ -131,29 +131,29 @@
     async function loadStudentQueue() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) return;
-
-      // Fetch user's rows
+    
+      // 1. Fetch all IDs globally, ordered by created_at
+      const { data: allData, error: allDataError } = await supabase
+        .from('queue')
+        .select('id')
+        .order('created_at', { ascending: true });
+      if (allDataError) return console.error('Error loading global queue:', allDataError);
+    
+      // 2. Fetch only the current user's rows for display
       const { data: userData, error: userDataError } = await supabase
         .from('queue')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
-
       if (userDataError) return console.error('Error loading user queue:', userDataError);
-
-      // Fetch all rows for global position
-      const { data: allData, error: allDataError } = await supabase
-        .from('queue')
-        .select('id')
-        .order('created_at', { ascending: true });
-
-      if (allDataError) return console.error('Error loading global queue:', allDataError);
-
+    
       const tbody = document.getElementById('student-queue');
       tbody.innerHTML = '';
-
+    
       userData.forEach(row => {
+        // global position = index in allData
         const position = allData.findIndex(r => r.id === row.id) + 1;
+    
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.file_name}</td>
