@@ -1,164 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>3D Printing Lab Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg-dark: #111;
-  --panel-dark: rgba(20,20,20,0.85);
-  --primary: #7b5cf6;
-  --primary-glow: #a26fff;
-  --accent-done: #10b981;
-  --accent-printing: #f59e0b;
-  --accent-pending: #facc15;
-  --text-light: #ddd;
-  --transition-speed: 0.3s;
-}
+  :root {
+    --primary: #2f4f90;
+    --primary-dark: #1e3562;
+    --accent: #7b5cf6;
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --table-header: #e0e4f1;
+    --status-pending: #facc15;
+    --status-printing: #3b82f6;
+    --status-done: #10b981;
+  }
 
-body {
-  margin: 0;
-  font-family: 'Share Tech Mono', monospace;
-  background: linear-gradient(135deg, #111, #1a1a1a);
-  color: var(--text-light);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-}
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
 
-header {
-  width: 100%;
-  padding: 1.5rem;
-  text-align: center;
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--primary);
-  text-shadow: 0 0 10px var(--primary-glow);
-  border-bottom: 2px solid rgba(255,255,255,0.1);
-}
+  header {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 1.2rem;
+    text-align: center;
+    font-size: 1.7rem;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
 
-.container {
-  margin-top: 2rem;
-  width: 90%;
-  max-width: 900px;
-  background: var(--panel-dark);
-  padding: 2rem;
-  border-radius: 15px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  transition: all var(--transition-speed);
-}
+  .container {
+    margin-top: 2rem;
+    width: 90%;
+    max-width: 900px;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
 
-h2, h3 { color: var(--primary); margin-top: 0; }
+  h2 { margin-top: 0; font-weight: 600; color: var(--primary); }
 
-input, button, select {
-  width: 100%;
-  padding: 0.7rem;
-  margin-top: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #333;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1rem;
-  background: #222;
-  color: var(--text-light);
-  box-sizing: border-box;
-  transition: all 0.2s;
-}
+  input, button, select {
+    width: 100%;
+    padding: 0.7rem;
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
 
-input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 5px var(--primary-glow); }
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
 
-button {
-  background: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+  button:hover { background: var(--primary-dark); }
 
-button:hover {
-  color: var(--bg-dark);
-  background: var(--primary);
-  box-shadow: 0 0 10px var(--primary-glow);
-}
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  font-size: 0.95rem;
-}
+  table th, table td {
+    padding: 0.75rem;
+    text-align: left;
+  }
 
-table th, table td {
-  padding: 0.75rem;
-  text-align: left;
-  transition: all 0.3s;
-}
+  table th {
+    background: var(--table-header);
+    font-weight: 600;
+  }
 
-table th {
-  background: rgba(0,0,0,0.3);
-  color: var(--primary);
-  text-shadow: 0 0 4px var(--primary-glow);
-}
+  table tbody tr:nth-child(even) { background: #f9f9f9; }
+  table tbody tr:hover { background: rgba(0,0,0,0.03); }
 
-table tbody tr {
-  background: rgba(0,0,0,0.2);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.3s;
-}
+  .status-pending { color: var(--status-pending); font-weight: 600; }
+  .status-printing { color: var(--status-printing); font-weight: 600; }
+  .status-done { color: var(--status-done); font-weight: 600; }
 
-table tbody tr:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 10px var(--primary-glow);
-}
+  #progress-container {
+    margin-top: 1rem;
+    display: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ddd;
+    height: 20px;
+  }
 
-.status-pending { color: var(--accent-pending); font-weight: bold; }
-.status-printing { color: var(--accent-printing); font-weight: bold; animation: pulse 1s infinite alternate; }
-.status-done { color: var(--accent-done); font-weight: bold; }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.4s ease;
+  }
 
-@keyframes pulse {
-  0% { text-shadow: 0 0 5px var(--accent-printing); }
-  100% { text-shadow: 0 0 20px var(--accent-printing); }
-}
+  .action-btn {
+    padding: 0.3rem 0.7rem;
+    margin-right: 0.3rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    background: var(--accent);
+    transition: background 0.2s;
+  }
 
-#progress-container {
-  margin-top: 1rem;
-  height: 20px;
-  width: 100%;
-  background: #222;
-  border-radius: 6px;
-  overflow: hidden;
-}
+  .action-btn:hover { background: #5b3cd4; }
 
-#progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-glow) 100%);
-  box-shadow: 0 0 10px var(--primary-glow);
-  transition: width 0.4s ease;
-}
-
-.action-btn {
-  padding: 0.3rem 0.7rem;
-  margin-right: 0.3rem;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  color: var(--bg-dark);
-  background: var(--primary);
-  text-shadow: 0 0 3px black;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  box-shadow: 0 0 8px var(--primary-glow);
-}
-
-.hidden { display: none; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
@@ -202,6 +171,7 @@ table tbody tr:hover {
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -209,7 +179,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const loginSection = document.getElementById('login-section');
 const studentDashboard = document.getElementById('student-dashboard');
 const adminDashboard = document.getElementById('admin-dashboard');
-
 const loginBtn = document.getElementById('login-btn');
 const signupBtn = document.getElementById('signup-btn');
 const emailInput = document.getElementById('email');
@@ -219,42 +188,78 @@ const progressContainer = document.getElementById('progress-container');
 const progressFill = document.getElementById('progress-fill');
 
 loginBtn.onclick = async () => {
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email: emailInput.value, password: passwordInput.value });
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
   if (error) return alert('Login failed: ' + error.message);
   showDashboard(user.email);
 };
 
 signupBtn.onclick = async () => {
-  const { data: { user }, error } = await supabase.auth.signUp({ email: emailInput.value, password: passwordInput.value });
+  const { data: { user }, error } = await supabase.auth.signUp({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
   if (error) return alert('Sign up failed: ' + error.message);
-  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({ email: emailInput.value, password: passwordInput.value });
+
+  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
   if (loginError) return alert('Login failed: ' + loginError.message);
   showDashboard(loginUser.user.email);
 };
 
 function showDashboard(email) {
-  if (email.endsWith('@school.edu')) { adminDashboard.classList.remove('hidden'); loadAdminQueue(); } 
-  else { studentDashboard.classList.remove('hidden'); loadStudentQueue(); }
+  if (email.endsWith('@school.edu')) {
+    adminDashboard.classList.remove('hidden');
+    loadAdminQueue();
+  } else {
+    studentDashboard.classList.remove('hidden');
+    loadStudentQueue();
+  }
   loginSection.classList.add('hidden');
 }
 
-document.getElementById('logout-student').onclick = async () => { await supabase.auth.signOut(); studentDashboard.classList.add('hidden'); loginSection.classList.remove('hidden'); };
-document.getElementById('logout-admin').onclick = async () => { await supabase.auth.signOut(); adminDashboard.classList.add('hidden'); loginSection.classList.remove('hidden'); };
+document.getElementById('logout-student').onclick = async () => {
+  await supabase.auth.signOut();
+  studentDashboard.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+};
+document.getElementById('logout-admin').onclick = async () => {
+  await supabase.auth.signOut();
+  adminDashboard.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+};
 
 /* ---------------- Student Queue ---------------- */
 async function loadStudentQueue() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return;
 
-  const { data: allData } = await supabase.from('queue').select('id').order('created_at',{ascending:true});
-  const { data: userData } = await supabase.from('queue').select('*').eq('user_id', user.id).order('created_at',{ascending:true});
+  const { data: allData } = await supabase
+    .from('queue')
+    .select('id')
+    .order('created_at', { ascending: true });
+
+  const { data: userData } = await supabase
+    .from('queue')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
 
   const tbody = document.getElementById('student-queue');
   tbody.innerHTML = '';
+
   userData.forEach(row => {
-    const position = allData.findIndex(r=>r.id===row.id)+1;
+    const position = allData.findIndex(r => r.id === row.id) + 1;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${row.file_name}</td><td class="status-${row.status}">${row.status}</td><td>${position}</td>`;
+    tr.innerHTML = `
+      <td>${row.file_name}</td>
+      <td class="status-${row.status}">${row.status}</td>
+      <td>${position}</td>
+    `;
     tbody.appendChild(tr);
   });
 }
@@ -263,6 +268,7 @@ uploadBtn.onclick = async () => {
   const fileInput = document.getElementById('file-upload');
   if (!fileInput.files.length) return;
   const file = fileInput.files[0];
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
@@ -270,13 +276,17 @@ uploadBtn.onclick = async () => {
   progressContainer.style.display = 'block';
   progressFill.style.width = '0%';
 
-  const { error: storageError } = await supabase.storage.from('stl-uploads').upload(filePath, file, { cacheControl:'3600', upsert:false });
+  const { error: storageError } = await supabase.storage
+    .from('stl-uploads')
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
   if (storageError) { console.error(storageError); return; }
 
-  await supabase.from('queue').insert([{user_id: user.id, file_name:file.name, status:'pending'}]);
+  await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
   loadStudentQueue();
-  progressFill.style.width='100%';
-  setTimeout(()=>{ progressContainer.style.display='none'; progressFill.style.width='0%'; }, 800);
+
+  progressFill.style.width = '100%';
+  setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 800);
+  fileInput.value = '';
 };
 
 /* ---------------- Admin Queue ---------------- */
@@ -284,12 +294,16 @@ async function loadAdminQueue() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
+  const { data } = await supabase
+    .from('queue')
+    .select('*')
+    .order('created_at', { ascending: true });
+
   const tbody = document.getElementById('admin-queue');
   tbody.innerHTML = '';
 
   data.forEach(row => {
-    const position = data.findIndex(r=>r.id===row.id)+1;
+    const position = data.findIndex(r => r.id === row.id) + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.user_id}</td>
@@ -302,23 +316,42 @@ async function loadAdminQueue() {
         </select>
       </td>
       <td>${position}</td>
-      <td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
+      <td>
+        <button class="action-btn" data-id="${row.id}" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 
-  document.querySelectorAll('.status-select').forEach(select=>{
-    select.onchange=async()=>{ await supabase.from('queue').update({status:select.value}).eq('id',select.dataset.id); loadAdminQueue(); };
+  document.querySelectorAll('.status-select').forEach(select => {
+    select.onchange = async () => {
+      const id = select.dataset.id;
+      const newStatus = select.value;
+      await supabase.from('queue').update({ status: newStatus }).eq('id', id);
+      loadAdminQueue();
+    };
   });
 }
 
-window.downloadFile = async (userId,fileName)=>{
+window.downloadFile = async (userId, fileName) => {
   const { data, error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
-  if(error) return console.error(error);
+  if (error) return console.error(error);
+
   const url = URL.createObjectURL(data);
-  const a=document.createElement('a');
-  a.href=url; a.download=fileName; document.body.appendChild(a);
-  a.click(); a.remove(); URL.revokeObjectURL(url);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; document.body.appendChild(a);
+  a.click(); a.remove();
+  URL.revokeObjectURL(url);
 };
+
+// Optional: add realtime updates
+supabase
+  .channel('public:queue')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
+    loadStudentQueue(); loadAdminQueue();
+  })
+  .subscribe();
+
 </script>
 </body>
 </html>
