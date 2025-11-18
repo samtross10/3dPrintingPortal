@@ -100,6 +100,52 @@
       showDashboard(loginUser.user.email);
     };
 
+    uploadBtn.onclick = async () => {
+      try {
+        const fileInput = document.getElementById('file-upload');
+        if (!fileInput.files.length) return console.log('No file selected');
+        const file = fileInput.files[0];
+        const user = supabase.auth.user();
+        if (!user) return console.log('User not logged in');
+    
+        const filePath = `${user.id}/${file.name}`;
+        console.log('Uploading file to path:', filePath);
+    
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+    
+        const { data, error } = await supabase.storage
+          .from('stl-uploads')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+    
+        if (error) {
+          console.error('Storage upload error:', error);
+          return;
+        }
+        console.log('Upload complete:', data);
+    
+        const { error: dbError } = await supabase
+          .from('queue')
+          .insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
+        
+        if (dbError) {
+          console.error('Database insert error:', dbError);
+          return;
+        }
+        console.log('Added to queue');
+    
+        progressFill.style.width = '100%';
+        setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
+        fileInput.value = '';
+      } catch (err) {
+        console.error('Unexpected error:', err);
+      }
+    };
+
+
     function showDashboard(email) {
       if (email.endsWith('@school.edu')) {
         adminDashboard.classList.remove('hidden');
