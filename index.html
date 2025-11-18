@@ -18,90 +18,31 @@
   --status-done: #10b981;
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-}
-
-header {
-  width: 100%;
-  background: var(--primary);
-  color: white;
-  padding: 1.2rem;
-  text-align: center;
-  font-size: 1.7rem;
-  font-weight: 600;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.container {
-  margin-top: 2rem;
-  width: 90%;
-  max-width: 900px;
-  background: var(--card-bg);
-  padding: 2rem;
-  border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-h2 { margin-top: 0; font-weight: 600; color: var(--primary); }
-
-input, button, select {
-  width: 100%;
-  padding: 0.7rem;
-  margin-top: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  box-sizing: border-box;
-}
-
-button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-button:hover { background: var(--primary-dark); }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  font-size: 0.95rem;
-}
-
-table th, table td { padding: 0.75rem; text-align: left; }
-table th { background: var(--table-header); font-weight: 600; }
-table tbody tr:nth-child(even) { background: #f9f9f9; }
-table tbody tr:hover { background: rgba(0,0,0,0.03); }
-
-.status-pending { color: var(--status-pending); font-weight: 600; }
-.status-printing { color: var(--status-printing); font-weight: 600; }
-.status-done { color: var(--status-done); font-weight: 600; }
-
-#progress-container { margin-top: 1rem; display: none; border-radius: 8px; overflow: hidden; background: #ddd; height: 20px; }
-#progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.4s ease; }
-
-.action-btn { padding: 0.3rem 0.7rem; margin-right: 0.3rem; font-size: 0.85rem; border-radius: 6px; border: none; cursor: pointer; color: white; background: var(--accent); transition: background 0.2s; }
-.action-btn:hover { background: #5b3cd4; }
-
-.hidden { display: none; }
-p { font-size: 0.9rem; margin-top: 0.5rem; }
-a { color: var(--accent); cursor: pointer; text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-.refresh-icon { cursor: pointer; font-size: 1.2rem; margin-left: 0.5rem; color: var(--accent); }
-.refresh-icon:hover { color: var(--primary); }
+body { margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:#333; display:flex; flex-direction:column; align-items:center; min-height:100vh;}
+header { width:100%; background:var(--primary); color:white; padding:1.2rem; text-align:center; font-size:1.7rem; font-weight:600; box-shadow:0 4px 8px rgba(0,0,0,0.15);}
+.container { margin-top:2rem; width:90%; max-width:900px; background:var(--card-bg); padding:2rem; border-radius:15px; box-shadow:0 8px 20px rgba(0,0,0,0.1);}
+h2 { margin-top:0; font-weight:600; color: var(--primary);}
+input, button, select { width:100%; padding:0.7rem; margin-top:0.5rem; border-radius:8px; border:1px solid #ccc; font-size:1rem; box-sizing:border-box;}
+button { background:var(--primary); color:white; border:none; cursor:pointer; font-weight:600; transition: background 0.2s;}
+button:hover { background: var(--primary-dark);}
+table { width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.95rem;}
+table th, table td { padding:0.75rem; text-align:left;}
+table th { background:var(--table-header); font-weight:600;}
+table tbody tr:nth-child(even) { background:#f9f9f9;}
+table tbody tr:hover { background:rgba(0,0,0,0.03);}
+.status-pending { color: var(--status-pending); font-weight:600;}
+.status-printing { color: var(--status-printing); font-weight:600;}
+.status-done { color: var(--status-done); font-weight:600;}
+#progress-container { margin-top:1rem; display:none; border-radius:8px; overflow:hidden; background:#ddd; height:20px;}
+#progress-fill { height:100%; width:0%; background:var(--primary); transition: width 0.4s ease;}
+.action-btn { padding:0.3rem 0.7rem; margin-right:0.3rem; font-size:0.85rem; border-radius:6px; border:none; cursor:pointer; color:white; background:var(--accent); transition: background 0.2s;}
+.action-btn:hover { background:#5b3cd4;}
+.hidden { display:none;}
+p { font-size:0.9rem; margin-top:0.5rem;}
+a { color:var(--accent); cursor:pointer; text-decoration:none;}
+a:hover { text-decoration:underline;}
+.refresh-icon { cursor:pointer; font-size:1.2rem; margin-left:0.5rem; color:var(--accent);}
+.refresh-icon:hover { color:var(--primary);}
 </style>
 </head>
 <body>
@@ -176,7 +117,7 @@ document.getElementById('login-btn').onclick = async () => {
   const password = document.getElementById('login-password').value;
   const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return alert('Login failed: ' + error.message);
-  showDashboard(user.email);
+  showDashboard(user.id, user.email);
 };
 
 /* --- SIGNUP --- */
@@ -186,14 +127,16 @@ document.getElementById('signup-btn').onclick = async () => {
   const password = document.getElementById('signup-password').value;
   const { data: { user }, error } = await supabase.auth.signUp({ email, password });
   if (error) return alert('Sign up failed: ' + error.message);
-  // Add name to the queue table for first uploaded file
+  // Insert into profiles
+  await supabase.from('profiles').insert([{id: user.id, full_name: fullName}]);
   const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
   if (loginError) return alert('Login failed: ' + loginError.message);
-  showDashboard(loginUser.user.email);
+  showDashboard(loginUser.user.id, loginUser.user.email);
 };
 
 /* --- DASHBOARD --- */
-function showDashboard(email){
+function showDashboard(userId,email){
+  window.currentUserId = userId;
   if(email.endsWith('@school.edu')){ adminDashboard.classList.remove('hidden'); loadAdminQueue(); } 
   else { studentDashboard.classList.remove('hidden'); loadStudentQueue(); }
   loginSection.classList.add('hidden'); signupSection.classList.add('hidden');
@@ -205,31 +148,24 @@ document.getElementById('logout-admin').onclick = async () => { await supabase.a
 
 /* --- QUEUE FUNCTIONS --- */
 async function loadStudentQueue(){
-  const { data: { user } } = await supabase.auth.getUser();
-  if(!user) return;
-  const { data: allData, error } = await supabase.from('queue').select('*').order('created_at', { ascending: true });
+  const { data: allData, error } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
   if(error) return console.error(error);
-
-  const tbody = document.getElementById('student-queue');
-  tbody.innerHTML = '';
-  allData.forEach((row,index)=>{ if(row.user_id!==user.id) return; const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.file_name}</td><td class="status-${row.status}">${row.status}</td><td>${index+1}</td>`; tbody.appendChild(tr); });
+  const tbody = document.getElementById('student-queue'); tbody.innerHTML='';
+  allData.forEach((row,index)=>{ if(row.user_id!==window.currentUserId) return;
+    const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.file_name}</td><td class="status-${row.status}">${row.status}</td><td>${index+1}</td>`; tbody.appendChild(tr);
+  });
 }
 
 async function loadAdminQueue(){
-  const { data: allData, error } = await supabase.from('queue').select('*').order('created_at', { ascending: true });
+  const { data: allData, error } = await supabase.from('queue').select('*, profiles(full_name)').order('created_at',{ascending:true});
   if(error) return console.error(error);
-
-  const tbody = document.getElementById('admin-queue');
-  tbody.innerHTML = '';
+  const tbody = document.getElementById('admin-queue'); tbody.innerHTML='';
   allData.forEach((row,index)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML=`<td>${row.full_name || row.user_id}</td><td>${row.file_name}</td><td><select data-id="${row.id}" class="status-select"><option value="pending" ${row.status==='pending'?'selected':''}>pending</option><option value="printing" ${row.status==='printing'?'selected':''}>printing</option><option value="done" ${row.status==='done'?'selected':''}>done</option></select></td><td>${index+1}</td><td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${row.profiles?.full_name || row.user_id}</td><td>${row.file_name}</td><td><select data-id="${row.id}" class="status-select"><option value="pending" ${row.status==='pending'?'selected':''}>pending</option><option value="printing" ${row.status==='printing'?'selected':''}>printing</option><option value="done" ${row.status==='done'?'selected':''}>done</option></select></td><td>${index+1}</td><td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
     tbody.appendChild(tr);
   });
-
-  document.querySelectorAll('.status-select').forEach(select=>{
-    select.onchange=async()=>{ await supabase.from('queue').update({status:select.value}).eq('id',select.dataset.id); loadAdminQueue(); };
-  });
+  document.querySelectorAll('.status-select').forEach(select=>{ select.onchange=async()=>{ await supabase.from('queue').update({status:select.value}).eq('id',select.dataset.id); loadAdminQueue(); }; });
 }
 
 /* --- REFRESH BUTTONS --- */
@@ -244,17 +180,14 @@ uploadBtn.onclick=async()=>{
   const fileInput=document.getElementById('file-upload');
   if(!fileInput.files.length) return;
   const file=fileInput.files[0];
-  const { data: { user } } = await supabase.auth.getUser();
-  if(!user) return;
-
-  const filePath=`${user.id}/${file.name}`;
+  if(!window.currentUserId) return;
+  const { data: userProfile } = await supabase.from('profiles').select('*').eq('id',window.currentUserId).single();
+  const filePath=`${window.currentUserId}/${file.name}`;
   progressContainer.style.display='block'; progressFill.style.width='0%';
   const { error: storageError } = await supabase.storage.from('stl-uploads').upload(filePath,file,{cacheControl:'3600',upsert:false});
   if(storageError) { console.error(storageError); return; }
-
-  await supabase.from('queue').insert([{user_id:user.id, full_name:'', file_name:file.name,status:'pending'}]);
+  await supabase.from('queue').insert([{user_id:window.currentUserId, file_name:file.name, status:'pending'}]);
   loadStudentQueue();
-
   progressFill.style.width='100%';
   setTimeout(()=>{ progressContainer.style.display='none'; progressFill.style.width='0%'; },800);
   fileInput.value='';
