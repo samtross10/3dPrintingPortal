@@ -1,270 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Printing Lab Portal</title>
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; }
-    header { width: 100%; background: #2f4f90; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; }
-    .container { margin-top: 2rem; width: 90%; max-width: 800px; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .hidden { display: none; }
-    input, button, select { width: 100%; padding: 0.75rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
-    button { background: #2f4f90; color: white; border: none; cursor: pointer; }
-    button:hover { background: #1e3562; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    table th, table td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
-    table th { background: #e6e6e6; }
-    #progress-container { margin-top: 1rem; display: none; }
-    #progress-bar { width: 100%; background: #ddd; border-radius: 6px; overflow: hidden; height: 20px; }
-    #progress-fill { height: 100%; width: 0%; background: #2f4f90; }
-    .action-btn { width: auto; padding: 0.3rem 0.6rem; margin-right: 0.3rem; font-size: 0.9rem; cursor: pointer; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D Printing Lab Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #2f4f90;
+    --primary-dark: #1e3562;
+    --accent: #7b5cf6;
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --table-header: #e0e4f1;
+    --status-pending: #facc15;
+    --status-printing: #3b82f6;
+    --status-done: #10b981;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  header {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 1.2rem;
+    text-align: center;
+    font-size: 1.7rem;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .container {
+    margin-top: 2rem;
+    width: 90%;
+    max-width: 900px;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+
+  h2 { margin-top: 0; font-weight: 600; color: var(--primary); }
+
+  input, button, select {
+    width: 100%;
+    padding: 0.7rem;
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  button:hover { background: var(--primary-dark); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+
+  table th, table td {
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  table th {
+    background: var(--table-header);
+    font-weight: 600;
+  }
+
+  table tbody tr:nth-child(even) { background: #f9f9f9; }
+  table tbody tr:hover { background: rgba(0,0,0,0.03); }
+
+  .status-pending { color: var(--status-pending); font-weight: 600; }
+  .status-printing { color: var(--status-printing); font-weight: 600; }
+  .status-done { color: var(--status-done); font-weight: 600; }
+
+  #progress-container {
+    margin-top: 1rem;
+    display: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ddd;
+    height: 20px;
+  }
+
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.4s ease;
+  }
+
+  .action-btn {
+    padding: 0.3rem 0.7rem;
+    margin-right: 0.3rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    background: var(--accent);
+    transition: background 0.2s;
+  }
+
+  .action-btn:hover { background: #5b3cd4; }
+
+  .hidden { display: none; }
+</style>
 </head>
 <body>
-  <header>3D Printing Lab Portal</header>
 
-  <!-- Login -->
-  <div id="login-section" class="container">
-    <h2>Login / Sign Up</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="login-btn">Login</button>
-    <button id="signup-btn">Sign Up</button>
-  </div>
+<header>3D Printing Lab Portal</header>
 
-  <!-- Student Dashboard -->
-  <div id="student-dashboard" class="container hidden">
-    <h2>Your Uploads</h2>
-    <input type="file" id="file-upload" accept=".stl" />
-    <button id="upload-btn">Upload STL</button>
-    <div id="progress-container">
-      <div id="progress-bar"><div id="progress-fill"></div></div>
-    </div>
-    <h3>Queue</h3>
-    <table>
-      <thead>
-        <tr><th>File</th><th>Status</th><th>Position</th></tr>
-      </thead>
-      <tbody id="student-queue"></tbody>
-    </table>
-    <button id="logout-student">Logout</button>
-  </div>
+<div id="login-section" class="container">
+  <h2>Login / Sign Up</h2>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="login-btn">Login</button>
+  <button id="signup-btn">Sign Up</button>
+</div>
 
-  <!-- Admin Dashboard -->
-  <div id="admin-dashboard" class="container hidden">
-    <h2>Admin Queue</h2>
-    <table>
-      <thead>
-        <tr><th>User</th><th>File</th><th>Status</th><th>Position</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="admin-queue"></tbody>
-    </table>
-    <button id="logout-admin">Logout</button>
-  </div>
+<div id="student-dashboard" class="container hidden">
+  <h2>Your Uploads</h2>
+  <input type="file" id="file-upload" accept=".stl" />
+  <button id="upload-btn">Upload STL</button>
+  <div id="progress-container"><div id="progress-fill"></div></div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <h3>Queue</h3>
+  <table>
+    <thead>
+      <tr><th>File</th><th>Status</th><th>Position</th></tr>
+    </thead>
+    <tbody id="student-queue"></tbody>
+  </table>
+  <button id="logout-student">Logout</button>
+</div>
 
-    const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY'; // Replace with anon key
-    const supabase = createClient(supabaseUrl, supabaseKey);
+<div id="admin-dashboard" class="container hidden">
+  <h2>Admin Queue</h2>
+  <table>
+    <thead>
+      <tr><th>User</th><th>File</th><th>Status</th><th>Position</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="admin-queue"></tbody>
+  </table>
+  <button id="logout-admin">Logout</button>
+</div>
 
-    const loginSection = document.getElementById('login-section');
-    const studentDashboard = document.getElementById('student-dashboard');
-    const adminDashboard = document.getElementById('admin-dashboard');
-    const loginBtn = document.getElementById('login-btn');
-    const signupBtn = document.getElementById('signup-btn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const uploadBtn = document.getElementById('upload-btn');
-    const progressContainer = document.getElementById('progress-container');
-    const progressFill = document.getElementById('progress-fill');
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    loginBtn.onclick = async () => {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
-        email: emailInput.value,
-        password: passwordInput.value
-      });
-      if (error) return alert('Login failed: ' + error.message);
-      showDashboard(user.email);
+const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const loginSection = document.getElementById('login-section');
+const studentDashboard = document.getElementById('student-dashboard');
+const adminDashboard = document.getElementById('admin-dashboard');
+const loginBtn = document.getElementById('login-btn');
+const signupBtn = document.getElementById('signup-btn');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const uploadBtn = document.getElementById('upload-btn');
+const progressContainer = document.getElementById('progress-container');
+const progressFill = document.getElementById('progress-fill');
+
+loginBtn.onclick = async () => {
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
+  if (error) return alert('Login failed: ' + error.message);
+  showDashboard(user.email);
+};
+
+signupBtn.onclick = async () => {
+  const { data: { user }, error } = await supabase.auth.signUp({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
+  if (error) return alert('Sign up failed: ' + error.message);
+
+  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
+  if (loginError) return alert('Login failed: ' + loginError.message);
+  showDashboard(loginUser.user.email);
+};
+
+function showDashboard(email) {
+  if (email.endsWith('@school.edu')) {
+    adminDashboard.classList.remove('hidden');
+    loadAdminQueue();
+  } else {
+    studentDashboard.classList.remove('hidden');
+    loadStudentQueue();
+  }
+  loginSection.classList.add('hidden');
+}
+
+document.getElementById('logout-student').onclick = async () => {
+  await supabase.auth.signOut();
+  studentDashboard.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+};
+document.getElementById('logout-admin').onclick = async () => {
+  await supabase.auth.signOut();
+  adminDashboard.classList.add('hidden');
+  loginSection.classList.remove('hidden');
+};
+
+/* ---------------- Student Queue ---------------- */
+async function loadStudentQueue() {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return;
+
+  const { data: allData } = await supabase
+    .from('queue')
+    .select('id')
+    .order('created_at', { ascending: true });
+
+  const { data: userData } = await supabase
+    .from('queue')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
+
+  const tbody = document.getElementById('student-queue');
+  tbody.innerHTML = '';
+
+  userData.forEach(row => {
+    const position = allData.findIndex(r => r.id === row.id) + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.file_name}</td>
+      <td class="status-${row.status}">${row.status}</td>
+      <td>${position}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+uploadBtn.onclick = async () => {
+  const fileInput = document.getElementById('file-upload');
+  if (!fileInput.files.length) return;
+  const file = fileInput.files[0];
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const filePath = `${user.id}/${file.name}`;
+  progressContainer.style.display = 'block';
+  progressFill.style.width = '0%';
+
+  const { error: storageError } = await supabase.storage
+    .from('stl-uploads')
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+  if (storageError) { console.error(storageError); return; }
+
+  await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
+  loadStudentQueue();
+
+  progressFill.style.width = '100%';
+  setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 800);
+  fileInput.value = '';
+};
+
+/* ---------------- Admin Queue ---------------- */
+async function loadAdminQueue() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data } = await supabase
+    .from('queue')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  const tbody = document.getElementById('admin-queue');
+  tbody.innerHTML = '';
+
+  data.forEach(row => {
+    const position = data.findIndex(r => r.id === row.id) + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.user_id}</td>
+      <td>${row.file_name}</td>
+      <td>
+        <select data-id="${row.id}" class="status-select">
+          <option value="pending" ${row.status==='pending'?'selected':''}>pending</option>
+          <option value="printing" ${row.status==='printing'?'selected':''}>printing</option>
+          <option value="done" ${row.status==='done'?'selected':''}>done</option>
+        </select>
+      </td>
+      <td>${position}</td>
+      <td>
+        <button class="action-btn" data-id="${row.id}" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.status-select').forEach(select => {
+    select.onchange = async () => {
+      const id = select.dataset.id;
+      const newStatus = select.value;
+      await supabase.from('queue').update({ status: newStatus }).eq('id', id);
+      loadAdminQueue();
     };
+  });
+}
 
-    signupBtn.onclick = async () => {
-      const { data: { user }, error } = await supabase.auth.signUp({
-        email: emailInput.value,
-        password: passwordInput.value
-      });
-      if (error) return alert('Sign up failed: ' + error.message);
+window.downloadFile = async (userId, fileName) => {
+  const { data, error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
+  if (error) return console.error(error);
 
-      const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({
-        email: emailInput.value,
-        password: passwordInput.value
-      });
-      if (loginError) return alert('Login failed: ' + loginError.message);
-      showDashboard(loginUser.user.email);
-    };
+  const url = URL.createObjectURL(data);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; document.body.appendChild(a);
+  a.click(); a.remove();
+  URL.revokeObjectURL(url);
+};
 
-    function showDashboard(email) {
-      if (email.endsWith('@school.edu')) {
-        adminDashboard.classList.remove('hidden');
-        loadAdminQueue();
-      } else {
-        studentDashboard.classList.remove('hidden');
-        loadStudentQueue();
-      }
-      loginSection.classList.add('hidden');
-    }
+// Optional: add realtime updates
+supabase
+  .channel('public:queue')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
+    loadStudentQueue(); loadAdminQueue();
+  })
+  .subscribe();
 
-    document.getElementById('logout-student').onclick = async () => {
-      await supabase.auth.signOut();
-      studentDashboard.classList.add('hidden');
-      loginSection.classList.remove('hidden');
-    };
-    document.getElementById('logout-admin').onclick = async () => {
-      await supabase.auth.signOut();
-      adminDashboard.classList.add('hidden');
-      loginSection.classList.remove('hidden');
-    };
-
-    /* ---------------- Student Queue ---------------- */
-    async function loadStudentQueue() {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
-    
-      // 1. Fetch all IDs globally, ordered by created_at
-      const { data: allData, error: allDataError } = await supabase
-        .from('queue')
-        .select('id')
-        .order('created_at', { ascending: true });
-      if (allDataError) return console.error('Error loading global queue:', allDataError);
-    
-      // 2. Fetch only the current user's rows for display
-      const { data: userData, error: userDataError } = await supabase
-        .from('queue')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-      if (userDataError) return console.error('Error loading user queue:', userDataError);
-    
-      const tbody = document.getElementById('student-queue');
-      tbody.innerHTML = '';
-    
-      userData.forEach(row => {
-        // global position = index in allData
-        const position = allData.findIndex(r => r.id === row.id) + 1;
-    
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.file_name}</td>
-          <td>${row.status}</td>
-          <td>${position}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    uploadBtn.onclick = async () => {
-      const fileInput = document.getElementById('file-upload');
-      if (!fileInput.files.length) return console.log('No file selected');
-      const file = fileInput.files[0];
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return console.log('User not logged in');
-
-      const filePath = `${user.id}/${file.name}`;
-      progressContainer.style.display = 'block';
-      progressFill.style.width = '0%';
-
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from('stl-uploads')
-        .upload(filePath, file, { cacheControl: '3600', upsert: false });
-
-      if (storageError) { console.error('Storage upload error:', storageError); return; }
-
-      const { error: dbError } = await supabase.from('queue').insert([
-        { user_id: user.id, file_name: file.name, status: 'pending' }
-      ]);
-      if (dbError) { console.error('Database insert error:', dbError); return; }
-
-      loadStudentQueue();
-
-      progressFill.style.width = '100%';
-      setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
-      fileInput.value = '';
-    };
-
-    /* ---------------- Admin Queue ---------------- */
-    async function loadAdminQueue() {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
-
-      const { data, error: dbError } = await supabase
-        .from('queue')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (dbError) return console.error('Error loading admin queue:', dbError);
-
-      const tbody = document.getElementById('admin-queue');
-      tbody.innerHTML = '';
-
-      data.forEach(row => {
-        const position = data.findIndex(r => r.id === row.id) + 1;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.user_id}</td>
-          <td>${row.file_name}</td>
-          <td>
-            <select data-id="${row.id}" class="status-select">
-              <option value="pending" ${row.status === 'pending' ? 'selected' : ''}>pending</option>
-              <option value="printing" ${row.status === 'printing' ? 'selected' : ''}>printing</option>
-              <option value="done" ${row.status === 'done' ? 'selected' : ''}>done</option>
-            </select>
-          </td>
-          <td>${position}</td>
-          <td>
-            <button class="action-btn" data-id="${row.id}" onclick="downloadFile('${row.user_id}', '${row.file_name}')">Download</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Add listener for status updates
-      document.querySelectorAll('.status-select').forEach(select => {
-        select.onchange = async () => {
-          const id = select.dataset.id;
-          const newStatus = select.value;
-          const { error } = await supabase.from('queue').update({ status: newStatus }).eq('id', id);
-          if (error) console.error('Failed to update status:', error);
-          loadAdminQueue();
-        };
-      });
-    }
-
-    window.downloadFile = async (userId, fileName) => {
-      const { data, error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
-      if (error) return console.error('Download error:', error);
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    };
-
-    // Realtime updates for both dashboards
-    supabase
-      .channel('public:queue')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
-        loadStudentQueue();
-        loadAdminQueue();
-      })
-      .subscribe();
-
-  </script>
+</script>
 </body>
 </html>
