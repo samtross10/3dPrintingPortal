@@ -63,7 +63,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
+    const supabaseKey = 'YOUR_ANON_KEY_HERE';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const loginSection = document.getElementById('login-section');
@@ -106,6 +106,7 @@
         adminDashboard.classList.remove('hidden');
       } else {
         studentDashboard.classList.remove('hidden');
+        loadStudentQueue(); // load queue on login
       }
       loginSection.classList.add('hidden');
     }
@@ -122,6 +123,32 @@
       loginSection.classList.remove('hidden');
     };
 
+    async function loadStudentQueue() {
+      const user = supabase.auth.user();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('queue')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) return console.error('Error loading queue:', error);
+
+      const tbody = document.getElementById('student-queue');
+      tbody.innerHTML = '';
+
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.file_name}</td>
+          <td>${row.status}</td>
+          <td>${index + 1}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     uploadBtn.onclick = async () => {
       try {
         const fileInput = document.getElementById('file-upload');
@@ -137,13 +164,20 @@
         progressContainer.style.display = 'block';
         progressFill.style.width = '0%';
 
-        const { data, error } = await supabase.storage.from('stl-uploads').upload(filePath, file, { cacheControl: '3600', upsert: false });
-        if (error) { console.error('Storage upload error:', error); return; }
-        console.log('Upload complete:', data);
+        const { data: storageData, error: storageError } = await supabase.storage
+          .from('stl-uploads')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
 
-        const { error: dbError } = await supabase.from('queue').insert([{ user_id: user.id, file_name: file.name, status: 'pending' }]);
+        if (storageError) { console.error('Storage upload error:', storageError); return; }
+        console.log('Upload complete:', storageData);
+
+        const { error: dbError } = await supabase.from('queue').insert([
+          { user_id: user.id, file_name: file.name, status: 'pending' }
+        ]);
         if (dbError) { console.error('Database insert error:', dbError); return; }
         console.log('Added to queue');
+
+        loadStudentQueue(); // refresh queue after upload
 
         progressFill.style.width = '100%';
         setTimeout(() => { progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 1000);
@@ -152,6 +186,15 @@
         console.error('Unexpected error:', err);
       }
     };
+
+    // Optional: Realtime updates for live queue refresh
+    supabase
+      .channel('public:queue')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
+        console.log('Queue changed:', payload);
+        loadStudentQueue();
+      })
+      .subscribe();
   </script>
 </body>
 </html>
