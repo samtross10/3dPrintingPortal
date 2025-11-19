@@ -103,6 +103,7 @@ header {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-family: inherit;
 }
 
 .btn-icon {
@@ -260,6 +261,7 @@ header {
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .tab:hover {
@@ -385,6 +387,7 @@ tbody tr:hover {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .btn-action:hover {
@@ -416,20 +419,31 @@ tbody tr:hover {
   font-size: 14px;
 }
 
-/* Loading Spinner */
-.spinner {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--card-bg);
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
+
+.toast.success { border-left: 4px solid var(--success); }
+.toast.error { border-left: 4px solid var(--warning); }
+.toast.info { border-left: 4px solid var(--info); }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -461,32 +475,6 @@ tbody tr:hover {
 .fade-in {
   animation: fadeIn 0.3s ease;
 }
-
-/* Toast Notifications */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--card-bg);
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 1000;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(400px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.toast.success { border-left: 4px solid var(--success); }
-.toast.error { border-left: 4px solid var(--warning); }
-.toast.info { border-left: 4px solid var(--info); }
 </style>
 </head>
 <body>
@@ -558,10 +546,10 @@ tbody tr:hover {
     </div>
 
     <div class="tabs">
-      <button class="tab active" id="tabActive" data-tab="active">
+      <button class="tab active" id="tabActive">
         Active (Pending & Printing)
       </button>
-      <button class="tab" id="tabCompleted" data-tab="completed">
+      <button class="tab" id="tabCompleted">
         Completed
       </button>
     </div>
@@ -671,12 +659,14 @@ async function initUser() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.href = '3dPrintingPortal';
+      console.log('No session found, redirecting to login');
+      window.location.href = '3dPrintingPortal.html';
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     currentUser = user;
+    console.log('Current user:', currentUser);
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -699,17 +689,28 @@ async function initUser() {
 
 // Load Dashboard Data
 async function loadDashboard() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    console.error('No current user');
+    return;
+  }
 
   try {
+    console.log('Loading dashboard for user:', currentUser.id);
+    
     const { data: queueData, error } = await supabase
       .from('queue')
       .select('id, user_id, file_name, status, created_at')
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Queue fetch error:', error);
+      throw error;
+    }
 
-    const userPrints = queueData.filter(item => item.user_id === currentUser.id);
+    console.log('Queue data:', queueData);
+
+    const userPrints = queueData ? queueData.filter(item => item.user_id === currentUser.id) : [];
+    console.log('User prints:', userPrints);
     
     // Update stats
     totalRequestsEl.textContent = userPrints.length;
@@ -722,7 +723,7 @@ async function loadDashboard() {
       ? userPrints.filter(p => p.status === 'pending' || p.status === 'printing')
       : userPrints.filter(p => p.status === 'done');
 
-    renderTable(filteredPrints, queueData);
+    renderTable(filteredPrints, queueData || []);
   } catch (error) {
     console.error('Load error:', error);
     showToast('Failed to load dashboard data', 'error');
@@ -766,12 +767,7 @@ function renderTable(prints, allQueue) {
         <td style="color: var(--text-secondary); font-size: 14px;">${formatDate(print.created_at)}</td>
         <td>
           ${print.status === 'done' 
-            ? `<button class="btn-action" onclick="downloadFile('${print.user_id}', '${encodeURIComponent(print.file_name)}')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 4px;">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+            ? `<button class="btn-action" data-user-id="${print.user_id}" data-file-name="${encodeURIComponent(print.file_name)}">
                 Download
               </button>` 
             : '<span style="color: var(--text-muted); font-size: 13px;">—</span>'}
@@ -779,6 +775,15 @@ function renderTable(prints, allQueue) {
       </tr>
     `;
   }).join('');
+
+  // Add event listeners to download buttons
+  document.querySelectorAll('.btn-action').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const userId = this.getAttribute('data-user-id');
+      const fileName = decodeURIComponent(this.getAttribute('data-file-name'));
+      downloadFile(userId, fileName);
+    });
+  });
 }
 
 // Upload File
@@ -790,16 +795,21 @@ async function uploadFile(file) {
   }
 
   try {
+    console.log('Starting upload for:', file.name);
     progressContainer.style.display = 'block';
     progressFill.style.width = '20%';
 
     const filePath = `${currentUser.id}/${Date.now()}_${file.name}`;
+    console.log('Upload path:', filePath);
     
     const { error: uploadError } = await supabase.storage
       .from('stl-uploads')
       .upload(filePath, file, { cacheControl: '3600', upsert: false });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
 
     progressFill.style.width = '60%';
 
@@ -811,7 +821,10 @@ async function uploadFile(file) {
         status: 'pending'
       }]);
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error('DB insert error:', dbError);
+      throw dbError;
+    }
 
     progressFill.style.width = '100%';
     showToast('File uploaded successfully!', 'success');
@@ -832,19 +845,33 @@ async function uploadFile(file) {
 }
 
 // Download File
-window.downloadFile = async function(userId, fileName) {
+async function downloadFile(userId, fileName) {
   try {
-    const decodedName = decodeURIComponent(fileName);
+    console.log('Downloading:', userId, fileName);
+    
+    // Try to find the file with timestamp prefix
+    const { data: files, error: listError } = await supabase.storage
+      .from('stl-uploads')
+      .list(userId);
+
+    if (listError) throw listError;
+
+    // Find the file that ends with the correct filename
+    const matchingFile = files.find(f => f.name.endsWith(fileName));
+    const fullPath = matchingFile ? `${userId}/${matchingFile.name}` : `${userId}/${fileName}`;
+    
+    console.log('Download path:', fullPath);
+
     const { data, error } = await supabase.storage
       .from('stl-uploads')
-      .download(`${userId}/${decodedName}`);
+      .download(fullPath);
 
     if (error) throw error;
 
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = decodedName;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -853,17 +880,23 @@ window.downloadFile = async function(userId, fileName) {
     showToast('Download started', 'success');
   } catch (error) {
     console.error('Download error:', error);
-    showToast('Download failed', 'error');
+    showToast('Download failed: ' + error.message, 'error');
   }
-};
+}
 
 // Event Listeners
-uploadBtn.addEventListener('click', () => fileInput.click());
+uploadBtn.addEventListener('click', () => {
+  console.log('Upload button clicked');
+  fileInput.click();
+});
+
 fileInput.addEventListener('change', (e) => {
+  console.log('File selected:', e.target.files[0]);
   if (e.target.files[0]) uploadFile(e.target.files[0]);
 });
 
 tabActive.addEventListener('click', () => {
+  console.log('Active tab clicked');
   currentTab = 'active';
   tabActive.classList.add('active');
   tabCompleted.classList.remove('active');
@@ -871,6 +904,7 @@ tabActive.addEventListener('click', () => {
 });
 
 tabCompleted.addEventListener('click', () => {
+  console.log('Completed tab clicked');
   currentTab = 'completed';
   tabCompleted.classList.add('active');
   tabActive.classList.remove('active');
@@ -878,6 +912,7 @@ tabCompleted.addEventListener('click', () => {
 });
 
 refreshBtn.addEventListener('click', async () => {
+  console.log('Refresh button clicked');
   refreshBtn.style.transform = 'rotate(360deg)';
   refreshBtn.style.transition = 'transform 0.5s ease';
   await loadDashboard();
@@ -888,9 +923,14 @@ refreshBtn.addEventListener('click', async () => {
 });
 
 logoutBtn.addEventListener('click', async () => {
+  console.log('Logout button clicked');
   await supabase.auth.signOut();
-  window.location.href = '3dPrintingPortal';
+  window.location.href = '3dPrintingPortal.html';
 });
 
 // Initialize
+console.log('Initializing dashboard...');
 initUser();
+</script>
+</body>
+</html>
