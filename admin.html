@@ -756,15 +756,24 @@ async function initUser() {
     console.log('Current user:', currentUser);
 
     // Check if user is admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, email, is_admin')
       .eq('id', user.id)
       .single();
 
     console.log('Profile:', profile);
+    console.log('is_admin value:', profile?.is_admin);
+    console.log('is_admin type:', typeof profile?.is_admin);
 
-    if (!profile || !profile.is_admin) {
+    if (profileError) {
+      console.error('Profile fetch error:', profileError);
+      showToast('Error loading profile', 'error');
+      return;
+    }
+
+    if (!profile || profile.is_admin !== true) {
+      console.log('User is not admin, redirecting to student portal');
       showToast('Access denied. Admin privileges required.', 'error');
       setTimeout(() => {
         window.location.href = 'index.html';
@@ -772,6 +781,7 @@ async function initUser() {
       return;
     }
 
+    console.log('Admin access granted');
     const email = profile?.email || user.email;
     adminEmail.textContent = email;
 
@@ -789,20 +799,10 @@ async function loadDashboard() {
   try {
     console.log('Loading admin dashboard...');
     
-    // Fetch all queue items with user profiles
+    // Fetch all queue items
     const { data: queueData, error: queueError } = await supabase
       .from('queue')
-      .select(`
-        id,
-        user_id,
-        file_name,
-        status,
-        created_at,
-        profiles:user_id (
-          full_name,
-          email
-        )
-      `)
+      .select('id, user_id, file_name, status, created_at')
       .order('created_at', { ascending: true });
 
     if (queueError) {
@@ -812,7 +812,32 @@ async function loadDashboard() {
 
     console.log('Queue data:', queueData);
 
-    const allPrints = queueData || [];
+    // Fetch all profiles
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email');
+
+    if (profilesError) {
+      console.error('Profiles fetch error:', profilesError);
+    }
+
+    console.log('Profiles data:', profilesData);
+
+    // Create a map of user_id to profile
+    const profileMap = {};
+    if (profilesData) {
+      profilesData.forEach(profile => {
+        profileMap[profile.id] = profile;
+      });
+    }
+
+    // Merge queue data with profiles
+    const allPrints = queueData.map(item => ({
+      ...item,
+      profiles: profileMap[item.user_id] || null
+    }));
+
+    console.log('Merged data:', allPrints);
     
     // Update stats
     totalQueueEl.textContent = allPrints.length;
