@@ -360,21 +360,6 @@ body {
         <span id="signupBtnText">Create Account</span>
       </button>
     </form>
-
-    <div class="divider">
-      <span>OR</span>
-    </div>
-
-    <button class="btn btn-primary" id="magicLinkBtn" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
-      Send Magic Link
-    </button>
-
-    <div id="magicLinkSection" class="magic-link-section">
-      <div class="info-box">
-        <strong>✨ Magic link sent!</strong><br>
-        Check your email for a secure login link. Click it to access your dashboard instantly.
-      </div>
-    </div>
   </div>
 </div>
 
@@ -391,8 +376,6 @@ const signupTab = document.getElementById('signupTab');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
 const alertBox = document.getElementById('alertBox');
-const magicLinkBtn = document.getElementById('magicLinkBtn');
-const magicLinkSection = document.getElementById('magicLinkSection');
 const loginBtn = document.getElementById('loginBtn');
 const signupBtn = document.getElementById('signupBtn');
 const loginBtnText = document.getElementById('loginBtnText');
@@ -430,7 +413,6 @@ loginTab.addEventListener('click', () => {
   signupTab.classList.remove('active');
   loginForm.style.display = 'block';
   signupForm.style.display = 'none';
-  magicLinkSection.classList.remove('show');
   alertBox.classList.remove('show');
 });
 
@@ -439,7 +421,6 @@ signupTab.addEventListener('click', () => {
   loginTab.classList.remove('active');
   signupForm.style.display = 'block';
   loginForm.style.display = 'none';
-  magicLinkSection.classList.remove('show');
   alertBox.classList.remove('show');
 });
 
@@ -532,44 +513,6 @@ signupForm.addEventListener('submit', async (e) => {
     showAlert(error.message || 'Signup failed. Please try again.', 'error');
   } finally {
     setLoading(signupBtn, signupBtnText, false);
-  }
-});
-
-// Magic Link Handler
-magicLinkBtn.addEventListener('click', async () => {
-  const emailInput = loginTab.classList.contains('active') 
-    ? document.getElementById('loginEmail')
-    : document.getElementById('signupEmail');
-  
-  const email = emailInput.value;
-
-  if (!email) {
-    showAlert('Please enter your email address first.', 'error');
-    emailInput.focus();
-    return;
-  }
-
-  magicLinkBtn.disabled = true;
-  magicLinkBtn.textContent = 'Sending...';
-
-  try {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin + '/index.html'
-      }
-    });
-
-    if (error) throw error;
-
-    magicLinkSection.classList.add('show');
-    showAlert('Magic link sent! Check your email.', 'success');
-  } catch (error) {
-    console.error('Magic link error:', error);
-    showAlert(error.message || 'Failed to send magic link.', 'error');
-  } finally {
-    magicLinkBtn.disabled = false;
-    magicLinkBtn.textContent = 'Send Magic Link';
   }
 });
 
