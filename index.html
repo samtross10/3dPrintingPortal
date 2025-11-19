@@ -1,227 +1,382 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>3D Printing Lab Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>3D Print Lab — Student Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --primary: #2f4f90;
-  --primary-dark: #1e3562;
-  --accent: #7b5cf6;
-  --bg: #f0f2f5;
-  --card-bg: #ffffff;
-  --table-header: #e0e4f1;
-  --status-pending: #facc15;
-  --status-printing: #3b82f6;
-  --status-done: #10b981;
-}
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --muted:#6b7280; --primary:#2f4f90; --accent:#7b5cf6;
+    --ok:#10b981; --warn:#f59e0b; --printing:#3b82f6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,#eef2ff 0%, #f8fafc 100%);
+    color:#0f172a; display:flex; justify-content:center; padding:32px 16px;
+  }
 
-body { margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:#333; display:flex; flex-direction:column; align-items:center; min-height:100vh;}
-header { width:100%; background:var(--primary); color:white; padding:1.2rem; text-align:center; font-size:1.7rem; font-weight:600; box-shadow:0 4px 8px rgba(0,0,0,0.15);}
-.container { margin-top:2rem; width:90%; max-width:900px; background:var(--card-bg); padding:2rem; border-radius:15px; box-shadow:0 8px 20px rgba(0,0,0,0.1);}
-h2 { margin-top:0; font-weight:600; color: var(--primary);}
-input, button, select { width:100%; padding:0.7rem; margin-top:0.5rem; border-radius:8px; border:1px solid #ccc; font-size:1rem; box-sizing:border-box;}
-button { background:var(--primary); color:white; border:none; cursor:pointer; font-weight:600; transition: background 0.2s;}
-button:hover { background: var(--primary-dark);}
-table { width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.95rem;}
-table th, table td { padding:0.75rem; text-align:left;}
-table th { background:var(--table-header); font-weight:600;}
-table tbody tr:nth-child(even) { background:#f9f9f9;}
-table tbody tr:hover { background:rgba(0,0,0,0.03);}
-.status-pending { color: var(--status-pending); font-weight:600;}
-.status-printing { color: var(--status-printing); font-weight:600;}
-.status-done { color: var(--status-done); font-weight:600;}
-#progress-container { margin-top:1rem; display:none; border-radius:8px; overflow:hidden; background:#ddd; height:20px;}
-#progress-fill { height:100%; width:0%; background:var(--primary); transition: width 0.4s ease;}
-.action-btn { padding:0.3rem 0.7rem; margin-right:0.3rem; font-size:0.85rem; border-radius:6px; border:none; cursor:pointer; color:white; background:var(--accent); transition: background 0.2s;}
-.action-btn:hover { background:#5b3cd4;}
-.hidden { display:none;}
-p { font-size:0.9rem; margin-top:0.5rem;}
-a { color:var(--accent); cursor:pointer; text-decoration:none;}
-a:hover { text-decoration:underline;}
-.refresh-icon { cursor:pointer; font-size:1.2rem; margin-left:0.5rem; color:var(--accent);}
-.refresh-icon:hover { color:var(--primary);}
+  .wrap { width:100%; max-width:980px; }
+
+  header.top {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    margin-bottom:18px;
+  }
+  .brand { display:flex; gap:12px; align-items:center; }
+  .logo {
+    width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg,var(--primary),var(--accent));
+    display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:20px;
+    box-shadow:0 6px 20px rgba(47,79,144,0.18);
+  }
+  h1 { margin:0; font-size:20px; }
+
+  .top-actions { display:flex; gap:12px; align-items:center; }
+
+  .card { background:var(--card); border-radius:12px; padding:18px; box-shadow: 0 6px 20px rgba(15,23,42,0.06); }
+
+  .stats {
+    display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:16px;
+  }
+  .stat {
+    padding:14px; border-radius:10px; background:linear-gradient(180deg,#fff,#fbfdff);
+    border:1px solid rgba(15,23,42,0.03);
+  }
+  .stat h3 { margin:0; font-size:13px; color:var(--muted); font-weight:600; }
+  .stat p { margin:6px 0 0; font-size:20px; font-weight:700; }
+
+  .controls { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .upload-btn {
+    background:linear-gradient(90deg,var(--primary),var(--accent)); color:white; border:none; padding:10px 14px;
+    border-radius:10px; cursor:pointer; font-weight:700; box-shadow:0 8px 24px rgba(47,79,144,0.12);
+  }
+  .refresh {
+    cursor:pointer; background:transparent; border:none; font-size:18px; color:var(--primary);
+    padding:8px; border-radius:8px;
+  }
+  .tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .tab {
+    padding:8px 12px; border-radius:10px; background:transparent; border:1px solid transparent; cursor:pointer; font-weight:600;
+  }
+  .tab.active { background:linear-gradient(180deg,#eef2ff,#f6f8ff); border-color:rgba(47,79,144,0.08); color:var(--primary); }
+
+  .table-wrap { overflow:auto; border-radius:10px; background:var(--card); border:1px solid rgba(15,23,42,0.03); }
+  table { width:100%; border-collapse:collapse; min-width:640px; }
+  thead th { text-align:left; padding:12px 14px; font-size:13px; color:var(--muted); border-bottom:1px solid rgba(15,23,42,0.04); background:transparent; }
+  tbody td { padding:12px 14px; border-bottom:1px solid rgba(15,23,42,0.03); vertical-align:middle; }
+  .status-pill { padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
+  .s-pending { background:#fff7ed; color:var(--warn); border:1px solid rgba(245,158,11,0.08); }
+  .s-printing { background:#eff6ff; color:var(--printing); border:1px solid rgba(59,130,246,0.08); }
+  .s-done { background:#ecfdf5; color:var(--ok); border:1px solid rgba(16,185,129,0.08); }
+
+  .small-muted { font-size:13px; color:var(--muted); }
+  .pos { font-weight:700; }
+
+  /* progress */
+  #progress-container { height:12px; width:100%; background:#eee; border-radius:8px; overflow:hidden; display:none; margin-top:10px; }
+  #progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .35s ease; }
+
+  /* responsive */
+  @media (max-width:720px){
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .brand h1 { font-size:16px; }
+    .logo { width:44px; height:44px; }
+  }
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <div class="logo">3D</div>
+        <div>
+          <h1 id="welcomeTitle">Welcome</h1>
+          <div class="small-muted" id="subline">Student printing dashboard</div>
+        </div>
+      </div>
 
-<header>3D Printing Lab Portal</header>
+      <div class="top-actions">
+        <button class="refresh" id="global-refresh" title="Refresh all">🔄</button>
+      </div>
+    </header>
 
-<!-- LOGIN -->
-<div id="login-section" class="container">
-  <h2>Login</h2>
-  <input type="email" id="login-email" placeholder="Email" />
-  <input type="password" id="login-password" placeholder="Password" />
-  <button id="login-btn">Login</button>
-  <p>Don't have an account? <a id="show-signup">Sign up!</a></p>
-</div>
+    <section class="card" id="dashboardCard">
+      <div class="stats" id="statsRow">
+        <div class="stat">
+          <h3>Total requests</h3>
+          <p id="totalRequests">0</p>
+        </div>
+        <div class="stat">
+          <h3>Pending</h3>
+          <p id="pendingCount">0</p>
+        </div>
+        <div class="stat">
+          <h3>Printing now</h3>
+          <p id="printingCount">0</p>
+        </div>
+        <div class="stat">
+          <h3>Completed</h3>
+          <p id="completedCount">0</p>
+        </div>
+      </div>
 
-<!-- SIGNUP -->
-<div id="signup-section" class="container hidden">
-  <h2>Sign Up</h2>
-  <input type="text" id="full-name" placeholder="Full Name" />
-  <input type="email" id="signup-email" placeholder="Email" />
-  <input type="password" id="signup-password" placeholder="Password" />
-  <button id="signup-btn">Sign Up</button>
-  <p>Already have an account? <a id="show-login">Login</a></p>
-</div>
+      <div class="controls" style="justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button class="upload-btn" id="uploadNewBtn">Upload New Print</button>
+          <div class="small-muted">Accepted types: <strong>.stl</strong></div>
+        </div>
 
-<!-- STUDENT DASHBOARD -->
-<div id="student-dashboard" class="container hidden">
-  <h2>Your Uploads <span class="refresh-icon" id="refresh-student">&#x21bb;</span></h2>
-  <input type="file" id="file-upload" accept=".stl" />
-  <button id="upload-btn">Upload STL</button>
-  <div id="progress-container"><div id="progress-fill"></div></div>
-  <table>
-    <thead>
-      <tr><th>File</th><th>Status</th><th>Position</th></tr>
-    </thead>
-    <tbody id="student-queue"></tbody>
-  </table>
-  <button id="logout-student">Logout</button>
-</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="refresh" id="refreshCounts" title="Refresh counts">⟳</button>
+        </div>
+      </div>
 
-<!-- ADMIN DASHBOARD -->
-<div id="admin-dashboard" class="container hidden">
-  <h2>Admin Queue <span class="refresh-icon" id="refresh-admin">&#x21bb;</span></h2>
-  <table>
-    <thead>
-      <tr><th>User</th><th>File</th><th>Status</th><th>Position</th><th>Actions</th></tr>
-    </thead>
-    <tbody id="admin-queue"></tbody>
-  </table>
-  <button id="logout-admin">Logout</button>
-</div>
+      <input id="file-input" type="file" accept=".stl" style="display:none" />
+
+      <div id="progress-container"><div id="progress-fill"></div></div>
+
+      <div style="margin-top:18px;">
+        <div class="tabs">
+          <div class="tab active" id="tab-active" data-tab="active">Active (pending & printing)</div>
+          <div class="tab" id="tab-completed" data-tab="completed">Completed</div>
+        </div>
+
+        <div class="table-wrap card" style="padding:0;">
+          <table id="prints-table" aria-live="polite">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Status</th>
+                <th>Position</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prints-body">
+              <!-- rows injected here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const supabaseUrl = 'https://djjispvhfepnpugushfu.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
-/* --- ELEMENTS --- */
-const loginSection = document.getElementById('login-section');
-const signupSection = document.getElementById('signup-section');
-const studentDashboard = document.getElementById('student-dashboard');
-const adminDashboard = document.getElementById('admin-dashboard');
+// --- CONFIG: put your values here ---
+const SUPABASE_URL = 'https://djjispvhfepnpugushfu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqamlzcHZoZmVwbnB1Z3VzaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTg4NDIsImV4cCI6MjA3ODk5NDg0Mn0.odnTvtequxXuunM3AbEy1GUmWkGAh5_7FGNySvTvUzY';
+// -------------------------------------
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* --- LOGIN/SIGNUP TOGGLE --- */
-document.getElementById('show-signup').onclick = e => { e.preventDefault(); loginSection.classList.add('hidden'); signupSection.classList.remove('hidden'); };
-document.getElementById('show-login').onclick = e => { e.preventDefault(); signupSection.classList.add('hidden'); loginSection.classList.remove('hidden'); };
+// UI elements
+const welcomeTitle = document.getElementById('welcomeTitle');
+const subline = document.getElementById('subline');
+const totalRequestsEl = document.getElementById('totalRequests');
+const pendingCountEl = document.getElementById('pendingCount');
+const printingCountEl = document.getElementById('printingCount');
+const completedCountEl = document.getElementById('completedCount');
+const printsBody = document.getElementById('prints-body');
+const fileInput = document.getElementById('file-input');
+const uploadNewBtn = document.getElementById('uploadNewBtn');
+const progressContainer = document.getElementById('progress-container');
+const progressFill = document.getElementById('progress-fill');
+const tabActive = document.getElementById('tab-active');
+const tabCompleted = document.getElementById('tab-completed');
+const refreshCountsBtn = document.getElementById('refreshCounts');
+const globalRefreshBtn = document.getElementById('global-refresh');
 
-/* --- LOGIN --- */
-document.getElementById('login-btn').onclick = async () => {
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return alert('Login failed: ' + error.message);
-  showDashboard(user.id, user.email);
+let currentTab = 'active';
+let currentUser = null;      // { id, email }
+let currentProfile = null;   // { id, full_name, email }
+let realtimeChannel = null;
+
+// helpers
+const fmtDate = (iso) => {
+  try { return new Date(iso).toLocaleString(); } catch(e){ return iso; }
 };
 
-/* --- SIGNUP --- */
-document.getElementById('signup-btn').onclick = async () => {
-  const fullName = document.getElementById('full-name').value;
-  const email = document.getElementById('signup-email').value;
-  const password = document.getElementById('signup-password').value;
-  const { data: { user }, error } = await supabase.auth.signUp({ email, password });
-  if (error) return alert('Sign up failed: ' + error.message);
-  await supabase.from('profiles').insert([{id: user.id, full_name: fullName}]);
-  const { data: loginUser, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  if (loginError) return alert('Login failed: ' + loginError.message);
-  showDashboard(loginUser.user.id, loginUser.user.email);
-};
-
-/* --- DASHBOARD --- */
-function showDashboard(userId,email){
-  window.currentUserId = userId;
-  if(email.endsWith('@school.edu')){ adminDashboard.classList.remove('hidden'); loadAdminQueue(); } 
-  else { studentDashboard.classList.remove('hidden'); loadStudentQueue(); }
-  loginSection.classList.add('hidden'); signupSection.classList.add('hidden');
+function statusPill(status){
+  if(status === 'pending') return `<span class="status-pill s-pending">PENDING</span>`;
+  if(status === 'printing') return `<span class="status-pill s-printing">PRINTING</span>`;
+  return `<span class="status-pill s-done">DONE</span>`;
 }
 
-/* --- LOGOUT --- */
-document.getElementById('logout-student').onclick = async () => { await supabase.auth.signOut(); studentDashboard.classList.add('hidden'); loginSection.classList.remove('hidden'); };
-document.getElementById('logout-admin').onclick = async () => { await supabase.auth.signOut(); adminDashboard.classList.add('hidden'); loginSection.classList.remove('hidden'); };
+// --- Load current user + profile ---
+async function initUser(){
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if(userError || !userData?.user){
+    // not logged in — redirect or show message
+    console.error('User not logged in', userError);
+    welcomeTitle.textContent = 'Welcome';
+    subline.textContent = 'Please sign in to use the printing portal';
+    return;
+  }
+  currentUser = userData.user;
+  // fetch profile
+  const { data: profile, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('id', currentUser.id)
+    .single();
+  if(pErr) console.warn('Profile fetch failed', pErr);
+  currentProfile = profile || { id: currentUser.id, full_name: 'Anonymous', email: currentUser.email };
+  welcomeTitle.textContent = `Welcome, ${currentProfile.full_name}`;
+  subline.textContent = currentProfile.email || '';
+}
 
-/* --- QUEUE FUNCTIONS --- */
-async function loadStudentQueue(){
-  const { data: queueData, error } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
-  if(error) return console.error(error);
-  const tbody = document.getElementById('student-queue'); tbody.innerHTML='';
-  queueData.forEach((row,index)=>{ if(row.user_id!==window.currentUserId) return;
-    const tr=document.createElement('tr'); tr.innerHTML=`<td>${row.file_name}</td><td class="status-${row.status}">${row.status}</td><td>${index+1}</td>`; tbody.appendChild(tr);
+// --- Load queue & stats ---
+async function loadDashboardData(){
+  // Fetch all queue rows (we need global order/positions)
+  const { data: queueData, error: qErr } = await supabase
+    .from('queue')
+    .select('id, user_id, file_name, status, created_at')
+    .order('created_at', { ascending: true });
+
+  if(qErr){ console.error('Failed fetching queue', qErr); return; }
+
+  // compute global position and filter to current user
+  const userRows = queueData.filter(r => r.user_id === currentUser.id);
+  // counts
+  const totalRequests = userRows.length;
+  const pending = userRows.filter(r => r.status === 'pending').length;
+  const printing = userRows.filter(r => r.status === 'printing').length;
+  const completed = userRows.filter(r => r.status === 'done').length;
+
+  // update counters
+  totalRequestsEl.textContent = totalRequests;
+  pendingCountEl.textContent = pending;
+  printingCountEl.textContent = printing;
+  completedCountEl.textContent = completed;
+
+  // which rows to show depending on tab
+  let rowsToShow;
+  if(currentTab === 'active'){
+    rowsToShow = userRows.filter(r => r.status === 'pending' || r.status === 'printing');
+  } else {
+    rowsToShow = userRows.filter(r => r.status === 'done');
+  }
+
+  // render table body
+  printsBody.innerHTML = '';
+  if(rowsToShow.length === 0){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="5" style="text-align:center; padding:18px; color:var(--muted)">No ${currentTab === 'active' ? 'active' : 'completed'} prints</td>`;
+    printsBody.appendChild(tr);
+    return;
+  }
+
+  rowsToShow.forEach((row) => {
+    const globalPos = queueData.findIndex(q => q.id === row.id) + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div style="font-weight:600">${row.file_name}</div></td>
+      <td>${statusPill(row.status)}</td>
+      <td class="pos">${globalPos}</td>
+      <td class="small-muted">${fmtDate(row.created_at)}</td>
+      <td>
+        ${row.status === 'done' ? `<button class="action-btn" data-user="${row.user_id}" data-file="${encodeURIComponent(row.file_name)}" onclick="downloadCompleted(this)">Download</button>` : ''}
+      </td>
+    `;
+    printsBody.appendChild(tr);
   });
 }
 
-async function loadAdminQueue(){
-  // Fetch queue
-  const { data: queueData, error: queueError } = await supabase.from('queue').select('*').order('created_at',{ascending:true});
-  if(queueError) return console.error(queueError);
-  // Fetch profiles
-  const { data: profilesData, error: profilesError } = await supabase.from('profiles').select('*');
-  if(profilesError) return console.error(profilesError);
-  // Merge data
-  const allData = queueData.map(q => ({
-    ...q,
-    full_name: profilesData.find(p=>p.id===q.user_id)?.full_name || q.user_id
-  }));
-  const tbody = document.getElementById('admin-queue'); tbody.innerHTML='';
-  allData.forEach((row,index)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${row.full_name}</td>
-                  <td>${row.file_name}</td>
-                  <td>
-                    <select data-id="${row.id}" class="status-select">
-                      <option value="pending" ${row.status==='pending'?'selected':''}>pending</option>
-                      <option value="printing" ${row.status==='printing'?'selected':''}>printing</option>
-                      <option value="done" ${row.status==='done'?'selected':''}>done</option>
-                    </select>
-                  </td>
-                  <td>${index+1}</td>
-                  <td><button class="action-btn" onclick="downloadFile('${row.user_id}','${row.file_name}')">Download</button></td>`;
-    tbody.appendChild(tr);
-  });
-  // Status change handlers
-  document.querySelectorAll('.status-select').forEach(select=>{
-    select.onchange = async () => {
-      await supabase.from('queue').update({status: select.value}).eq('id', select.dataset.id);
-      loadAdminQueue();
-    };
-  });
-}
+// --- Upload handler ---
+uploadNewBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
+  if(!currentUser) return alert('Not signed in');
 
-/* --- REFRESH BUTTONS --- */
-document.getElementById('refresh-student').onclick = loadStudentQueue;
-document.getElementById('refresh-admin').onclick = loadAdminQueue;
+  // build path userId/filename
+  const filePath = `${currentUser.id}/${file.name}`;
 
-/* --- UPLOAD --- */
-const uploadBtn=document.getElementById('upload-btn');
-const progressContainer=document.getElementById('progress-container');
-const progressFill=document.getElementById('progress-fill');
-uploadBtn.onclick=async()=>{
-  const fileInput=document.getElementById('file-upload');
-  if(!fileInput.files.length) return;
-  const file=fileInput.files[0];
-  if(!window.currentUserId) return;
-  const filePath=`${window.currentUserId}/${file.name}`;
-  progressContainer.style.display='block'; progressFill.style.width='0%';
-  const { error: storageError } = await supabase.storage.from('stl-uploads').upload(filePath,file,{cacheControl:'3600',upsert:false});
-  if(storageError) { console.error(storageError); return; }
-  await supabase.from('queue').insert([{user_id:window.currentUserId,file_name:file.name,status:'pending'}]);
-  loadStudentQueue();
-  progressFill.style.width='100%';
-  setTimeout(()=>{ progressContainer.style.display='none'; progressFill.style.width='0%'; },800);
-  fileInput.value='';
-}
+  // show progress UI
+  progressContainer.style.display = 'block';
+  progressFill.style.width = '0%';
 
-/* --- DOWNLOAD --- */
-window.downloadFile=async(userId,fileName)=>{
-  const { data,error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
-  if(error) return console.error(error);
-  const url = URL.createObjectURL(data); const a=document.createElement('a'); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  try {
+    // upload - Supabase JS client doesn't provide per-file progress in simple upload; show basic fill states
+    const { data: uploadData, error: uploadErr } = await supabase.storage
+      .from('stl-uploads')
+      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+    if(uploadErr){
+      console.error('Storage upload error', uploadErr);
+      alert('Upload failed: ' + (uploadErr.message || uploadErr));
+      progressContainer.style.display = 'none';
+      return;
+    }
+
+    // insert queue row
+    const { error: dbErr } = await supabase
+      .from('queue')
+      .insert([{ user_id: currentUser.id, file_name: file.name, status: 'pending' }]);
+
+    if(dbErr){
+      console.error('DB insert error', dbErr);
+      alert('Could not add to queue: ' + (dbErr.message || dbErr));
+      progressContainer.style.display = 'none';
+      return;
+    }
+
+    // quick UI feedback
+    progressFill.style.width = '90%';
+    await loadDashboardData();
+    progressFill.style.width = '100%';
+    setTimeout(()=>{ progressContainer.style.display = 'none'; progressFill.style.width = '0%'; }, 700);
+
+    // reset file input
+    fileInput.value = '';
+  } catch(err){
+    console.error(err);
+    alert('Unexpected error');
+    progressContainer.style.display = 'none';
+  }
+});
+
+// simple download for completed file
+window.downloadCompleted = async (btn) => {
+  const userId = btn.dataset.user;
+  const fileName = decodeURIComponent(btn.dataset.file);
+  try{
+    const { data, error } = await supabase.storage.from('stl-uploads').download(`${userId}/${fileName}`);
+    if(error){ console.error(error); alert('Download failed'); return; }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch(e){ console.error(e); alert('Download error'); }
 };
+
+// tabs
+tabActive.addEventListener('click', () => { currentTab = 'active'; tabActive.classList.add('active'); tabCompleted.classList.remove('active'); loadDashboardData(); });
+tabCompleted.addEventListener('click', () => { currentTab = 'completed'; tabCompleted.classList.add('active'); tabActive.classList.remove('active'); loadDashboardData(); });
+
+// refresh buttons
+refreshCountsBtn.addEventListener('click', loadDashboardData);
+globalRefreshBtn.addEventListener('click', async () => { await loadDashboardData(); });
+
+// realtime subscription to keep UI in sync
+function setupRealtime(){
+  if(realtimeChannel) return;
+  realtimeChannel = supabase
+    .channel('public:queue')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, payload => {
+      // only refresh if relevant (a new row or update)
+      loadDashboardData();
+    })
+    .subscribe();
+}
+
+// init flow
+(async function init(){
+  await initUser();
+  if(!currentUser) return;
+  await loadDashboardData();
+  setupRealtime();
+})();
 </script>
 </body>
 </html>
