@@ -864,4 +864,33 @@ fileInput.addEventListener('change', (e) => {
 });
 
 tabActive.addEventListener('click', () => {
-  current
+  currentTab = 'active';
+  tabActive.classList.add('active');
+  tabCompleted.classList.remove('active');
+  loadDashboard();
+});
+
+tabCompleted.addEventListener('click', () => {
+  currentTab = 'completed';
+  tabCompleted.classList.add('active');
+  tabActive.classList.remove('active');
+  loadDashboard();
+});
+
+refreshBtn.addEventListener('click', async () => {
+  refreshBtn.style.transform = 'rotate(360deg)';
+  refreshBtn.style.transition = 'transform 0.5s ease';
+  await loadDashboard();
+  setTimeout(() => {
+    refreshBtn.style.transform = '';
+  }, 500);
+  showToast('Dashboard refreshed', 'info');
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.href = '3dPrintingPortal';
+});
+
+// Initialize
+initUser();
