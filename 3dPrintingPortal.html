@@ -497,7 +497,8 @@ signupForm.addEventListener('submit', async (e) => {
       options: {
         data: {
           full_name: name
-        }
+        },
+        emailRedirectTo: window.location.origin + '/index.html'
       }
     });
 
@@ -520,13 +521,12 @@ signupForm.addEventListener('submit', async (e) => {
       }
     }
 
-    showAlert('Account created successfully! Please check your email to verify.', 'success');
+    showAlert('Account created successfully! Logging you in...', 'success');
     
-    // Switch to login form after 2 seconds
+    // Auto redirect to dashboard after signup
     setTimeout(() => {
-      loginTab.click();
-      document.getElementById('loginEmail').value = email;
-    }, 2000);
+      window.location.href = 'index.html';
+    }, 1000);
   } catch (error) {
     console.error('Signup error:', error);
     showAlert(error.message || 'Signup failed. Please try again.', 'error');
