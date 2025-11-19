@@ -562,12 +562,11 @@ tbody tr:hover {
             <th>Status</th>
             <th>Queue Position</th>
             <th>Uploaded</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           <tr>
-            <td colspan="5">
+            <td colspan="4">
               <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
@@ -735,7 +734,7 @@ function renderTable(prints, allQueue) {
   if (prints.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="5">
+        <td colspan="4">
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
@@ -765,25 +764,9 @@ function renderTable(prints, allQueue) {
         <td>${getStatusPill(print.status)}</td>
         <td><div class="position-badge">${queuePosition}</div></td>
         <td style="color: var(--text-secondary); font-size: 14px;">${formatDate(print.created_at)}</td>
-        <td>
-          ${print.status === 'done' 
-            ? `<button class="btn-action" data-user-id="${print.user_id}" data-file-name="${encodeURIComponent(print.file_name)}">
-                Download
-              </button>` 
-            : '<span style="color: var(--text-muted); font-size: 13px;">—</span>'}
-        </td>
       </tr>
     `;
   }).join('');
-
-  // Add event listeners to download buttons
-  document.querySelectorAll('.btn-action').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const userId = this.getAttribute('data-user-id');
-      const fileName = decodeURIComponent(this.getAttribute('data-file-name'));
-      downloadFile(userId, fileName);
-    });
-  });
 }
 
 // Upload File
