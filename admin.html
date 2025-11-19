@@ -839,7 +839,7 @@ async function loadDashboard() {
     // Fetch all queue items
     const { data: queueData, error: queueError } = await supabase
       .from('queue')
-      .select('id, user_id, file_name, status, created_at')
+      .select('id, user_id, file_name, status, created_at, completed_at')
       .order('created_at', { ascending: true });
 
     if (queueError) {
@@ -876,7 +876,7 @@ async function loadDashboard() {
 
     console.log('Merged data:', allPrints);
     
-    // Update stats - only count pending and printing as "active queue"
+    // Update stats - only count pendi// Update stats - only count pending and printing as "active queue"
     const activePrints = allPrints.filter(p => p.status === 'pending' || p.status === 'printing');
     activeQueueEl.textContent = activePrints.length;
     pendingCountEl.textContent = allPrints.filter(p => p.status === 'pending').length;
@@ -948,7 +948,7 @@ function renderTable(prints) {
         <td style="color: var(--text-secondary); font-size: 14px;">${formatDate(print.created_at)}</td>
         <td>
           <div class="action-buttons">
-            <button class="btn-action download" data-user-id="${print.user_id}" data-file-name="${encodeURIComponent(print.file_name)}">
+            <button class="btn-action download" data-user-id="${print.user_id}" data-file-name="${encodeURIComponent(print.file_name)}" data-user-name="${escapeHtml(userName)}">
               Download
             </button>
             <button class="btn-action delete" data-id="${print.id}" data-file-name="${fileName}" data-user-id="${print.user_id}">
@@ -974,9 +974,16 @@ function attachEventListeners() {
       const oldStatus = this.getAttribute('data-current');
       
       try {
+        const updateData = { status: newStatus };
+        
+        // If changing to "done", add completion timestamp
+        if (newStatus === 'done' && oldStatus !== 'done') {
+          updateData.completed_at = new Date().toISOString();
+        }
+        
         const { error } = await supabase
           .from('queue')
-          .update({ status: newStatus })
+          .update(updateData)
           .eq('id', id);
 
         if (error) throw error;
@@ -986,7 +993,7 @@ function attachEventListeners() {
         await loadDashboard();
       } catch (error) {
         console.error('Status update error:', error);
-        showToast('Failed to update status', 'error');
+        showToast('Failed to update status: ' + error.message, 'error');
         this.value = oldStatus;
       }
     });
@@ -997,7 +1004,8 @@ function attachEventListeners() {
     btn.addEventListener('click', function() {
       const userId = this.getAttribute('data-user-id');
       const fileName = decodeURIComponent(this.getAttribute('data-file-name'));
-      downloadFile(userId, fileName);
+      const userName = this.getAttribute('data-user-name');
+      downloadFile(userId, fileName, userName);
     });
   });
 
@@ -1013,7 +1021,7 @@ function attachEventListeners() {
 }
 
 // Download File
-async function downloadFile(userId, fileName) {
+async function downloadFile(userId, fileName, userName) {
   try {
     console.log('Downloading:', userId, fileName);
     
@@ -1036,10 +1044,13 @@ async function downloadFile(userId, fileName) {
 
     if (error) throw error;
 
+    // Format download name as "Full Name, filename.stl"
+    const downloadName = userName ? `${userName}, ${fileName}` : fileName;
+
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     a.remove();
