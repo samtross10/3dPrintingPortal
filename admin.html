@@ -228,6 +228,40 @@ header {
   color: var(--text-primary);
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-gradient-start);
+  border-radius: 8px 8px 0 0;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
 /* Table */
 .table-container {
   overflow-x: auto;
@@ -598,8 +632,8 @@ tbody tr:hover {
 
   <div class="stats-grid fade-in">
     <div class="stat-card total">
-      <h3>Total Queue</h3>
-      <div class="value" id="totalQueue">0</div>
+      <h3>Active Queue</h3>
+      <div class="value" id="activeQueue">0</div>
     </div>
     <div class="stat-card pending">
       <h3>Pending</h3>
@@ -618,6 +652,15 @@ tbody tr:hover {
   <div class="main-card fade-in">
     <div class="card-header">
       <h2 class="card-title">Print Queue Management</h2>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabQueue">
+        Queue (Pending & Printing)
+      </button>
+      <button class="tab" id="tabCompleted">
+        Completed
+      </button>
     </div>
 
     <div class="table-container">
@@ -674,10 +717,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let deleteItemId = null;
+let currentTab = 'queue'; // 'queue' or 'completed'
 
 // DOM Elements
 const adminEmail = document.getElementById('adminEmail');
-const totalQueueEl = document.getElementById('totalQueue');
+const activeQueueEl = document.getElementById('activeQueue');
 const pendingCountEl = document.getElementById('pendingCount');
 const printingCountEl = document.getElementById('printingCount');
 const completedCountEl = document.getElementById('completedCount');
@@ -688,6 +732,8 @@ const deleteModal = document.getElementById('deleteModal');
 const deleteFileName = document.getElementById('deleteFileName');
 const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+const tabQueue = document.getElementById('tabQueue');
+const tabCompleted = document.getElementById('tabCompleted');
 
 // Utility Functions
 function showToast(message, type = 'info') {
@@ -830,13 +876,19 @@ async function loadDashboard() {
 
     console.log('Merged data:', allPrints);
     
-    // Update stats
-    totalQueueEl.textContent = allPrints.length;
+    // Update stats - only count pending and printing as "active queue"
+    const activePrints = allPrints.filter(p => p.status === 'pending' || p.status === 'printing');
+    activeQueueEl.textContent = activePrints.length;
     pendingCountEl.textContent = allPrints.filter(p => p.status === 'pending').length;
     printingCountEl.textContent = allPrints.filter(p => p.status === 'printing').length;
     completedCountEl.textContent = allPrints.filter(p => p.status === 'done').length;
 
-    renderTable(allPrints);
+    // Filter based on current tab
+    const filteredPrints = currentTab === 'queue'
+      ? allPrints.filter(p => p.status === 'pending' || p.status === 'printing')
+      : allPrints.filter(p => p.status === 'done');
+
+    renderTable(filteredPrints);
   } catch (error) {
     console.error('Load error:', error);
     showToast('Failed to load dashboard data', 'error');
@@ -854,8 +906,8 @@ function renderTable(prints) {
               <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
               <polyline points="13 2 13 9 20 9"/>
             </svg>
-            <h3>No prints in queue</h3>
-            <p>The print queue is empty.</p>
+            <h3>No ${currentTab === 'queue' ? 'active' : 'completed'} prints</h3>
+            <p>${currentTab === 'queue' ? 'The print queue is empty.' : 'No completed prints yet.'}</p>
           </div>
         </td>
       </tr>
@@ -885,11 +937,13 @@ function renderTable(prints) {
           </div>
         </td>
         <td>
-          <select class="status-select" data-id="${print.id}" data-current="${print.status}">
-            <option value="pending" ${print.status === 'pending' ? 'selected' : ''}>Pending</option>
-            <option value="printing" ${print.status === 'printing' ? 'selected' : ''}>Printing</option>
-            <option value="done" ${print.status === 'done' ? 'selected' : ''}>Done</option>
-          </select>
+          ${currentTab === 'queue' ? `
+            <select class="status-select" data-id="${print.id}" data-current="${print.status}">
+              <option value="pending" ${print.status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="printing" ${print.status === 'printing' ? 'selected' : ''}>Printing</option>
+              <option value="done" ${print.status === 'done' ? 'selected' : ''}>Done</option>
+            </select>
+          ` : getStatusPill(print.status)}
         </td>
         <td style="color: var(--text-secondary); font-size: 14px;">${formatDate(print.created_at)}</td>
         <td>
@@ -897,7 +951,7 @@ function renderTable(prints) {
             <button class="btn-action download" data-user-id="${print.user_id}" data-file-name="${encodeURIComponent(print.file_name)}">
               Download
             </button>
-            <button class="btn-action delete" data-id="${print.id}" data-file-name="${fileName}">
+            <button class="btn-action delete" data-id="${print.id}" data-file-name="${fileName}" data-user-id="${print.user_id}">
               Delete
             </button>
           </div>
@@ -1002,67 +1056,43 @@ async function downloadFile(userId, fileName) {
 async function deletePrintJob() {
   if (!deleteItemId) return;
 
+  const deleteButton = confirmDeleteBtn;
+  const originalText = deleteButton.textContent;
+  deleteButton.textContent = 'Deleting...';
+  deleteButton.disabled = true;
+
   try {
-    console.log('Deleting print job:', deleteItemId);
+    console.log('Deleting print job with ID:', deleteItemId);
 
-    // First, get the file info so we can delete from storage
-    const { data: queueItem, error: fetchError } = await supabase
-      .from('queue')
-      .select('user_id, file_name')
-      .eq('id', deleteItemId)
-      .single();
-
-    if (fetchError) {
-      console.error('Fetch error:', fetchError);
-      throw fetchError;
-    }
-
-    console.log('Queue item to delete:', queueItem);
-
-    // Delete from database
-    const { error: dbError } = await supabase
+    // Delete from database - this is the critical part
+    const { data: deletedData, error: dbError } = await supabase
       .from('queue')
       .delete()
-      .eq('id', deleteItemId);
+      .eq('id', deleteItemId)
+      .select();
+
+    console.log('Delete response:', { deletedData, dbError });
 
     if (dbError) {
       console.error('Database delete error:', dbError);
-      throw dbError;
+      throw new Error(dbError.message || 'Failed to delete from database');
     }
 
-    // Try to delete from storage (optional - don't fail if file doesn't exist)
-    if (queueItem) {
-      try {
-        const { data: files } = await supabase.storage
-          .from('stl-uploads')
-          .list(queueItem.user_id);
-
-        const matchingFile = files?.find(f => f.name.endsWith(queueItem.file_name));
-        
-        if (matchingFile) {
-          const filePath = `${queueItem.user_id}/${matchingFile.name}`;
-          console.log('Deleting file from storage:', filePath);
-          
-          const { error: storageError } = await supabase.storage
-            .from('stl-uploads')
-            .remove([filePath]);
-
-          if (storageError) {
-            console.error('Storage delete error (non-fatal):', storageError);
-          }
-        }
-      } catch (storageErr) {
-        console.error('Storage cleanup error (non-fatal):', storageErr);
-      }
+    if (!deletedData || deletedData.length === 0) {
+      throw new Error('No rows were deleted. Item may not exist or you may lack permissions.');
     }
 
+    console.log('Successfully deleted:', deletedData);
     showToast('Print job deleted successfully', 'success');
     deleteModal.classList.remove('show');
     deleteItemId = null;
     await loadDashboard();
   } catch (error) {
     console.error('Delete error:', error);
-    showToast('Failed to delete print job: ' + error.message, 'error');
+    showToast('Failed to delete: ' + error.message, 'error');
+  } finally {
+    deleteButton.textContent = originalText;
+    deleteButton.disabled = false;
   }
 }
 
@@ -1082,6 +1112,22 @@ logoutBtn.addEventListener('click', async () => {
   console.log('Logout button clicked');
   await supabase.auth.signOut();
   window.location.href = '3dPrintingPortal.html';
+});
+
+tabQueue.addEventListener('click', () => {
+  console.log('Queue tab clicked');
+  currentTab = 'queue';
+  tabQueue.classList.add('active');
+  tabCompleted.classList.remove('active');
+  loadDashboard();
+});
+
+tabCompleted.addEventListener('click', () => {
+  console.log('Completed tab clicked');
+  currentTab = 'completed';
+  tabCompleted.classList.add('active');
+  tabQueue.classList.remove('active');
+  loadDashboard();
 });
 
 cancelDeleteBtn.addEventListener('click', () => {
