@@ -35,186 +35,13 @@ body {
   background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
   min-height: 100vh;
   color: var(--text-primary);
+  padding: 24px;
   line-height: 1.6;
-}
-
-.hide {
-  display: none !important;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
-}
-
-/* Header */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 24px;
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.logo:hover {
-  transform: scale(1.05);
-}
-
-.brand-text h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.brand-text .subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-/* Navigation Tabs */
-.nav-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 32px;
-  background: var(--card-bg);
-  padding: 6px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-}
-
-.nav-tab {
-  flex: 1;
-  padding: 12px 24px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  text-align: center;
-}
-
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-gradient-start);
-}
-
-.nav-tab.active {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-/* Page Content Sections */
-.page-content {
-  display: none;
-}
-
-.page-content.active {
-  display: block;
-}
-
-/* Home Page Styles */
-.home-hero {
-  background: var(--card-bg);
-  border-radius: 20px;
-  padding: 48px;
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  margin-bottom: 32px;
-}
-
-.home-hero h2 {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.home-hero p {
-  font-size: 18px;
-  color: var(--text-secondary);
-  margin-bottom: 32px;
-}
-
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.quick-action-card {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 32px;
-  text-align: center;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.quick-action-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
-}
-
-.quick-action-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-}
-
-.quick-action-card h3 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: var(--text-primary);
-}
-
-.quick-action-card p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 20px;
 }
 
 /* Header */
@@ -654,10 +481,10 @@ tbody tr:hover {
 <div class="container">
   <header>
     <div class="brand">
-      <div class="logo" id="logoBtn">3D</div>
+      <div class="logo">3D</div>
       <div class="brand-text">
-        <h1 id="welcomeTitle">3D Print Lab</h1>
-        <div class="subtitle" id="userEmail">Student Portal</div>
+        <h1 id="welcomeTitle">Welcome</h1>
+        <div class="subtitle" id="userEmail">Loading...</div>
       </div>
     </div>
     <div class="header-actions">
@@ -667,7 +494,7 @@ tbody tr:hover {
           <path d="M21 3v6h-6"/>
         </svg>
       </button>
-      <button class="btn btn-secondary hide" id="logoutBtn">
+      <button class="btn btn-secondary" id="logoutBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/>
@@ -675,157 +502,10 @@ tbody tr:hover {
         </svg>
         Logout
       </button>
-      <button class="btn btn-primary hide" id="signInBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
-        </svg>
-        Sign In
-      </button>
     </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <div class="nav-tabs">
-    <button class="nav-tab active" id="navHome">Home</button>
-    <button class="nav-tab" id="navUpload">Upload</button>
-    <button class="nav-tab" id="navTools">Tools</button>
-  </div>
-
-  <!-- Home Page -->
-  <div class="page-content active" id="homePage">
-    <div class="home-hero fade-in">
-      <h2>Welcome to the 3D Print Lab</h2>
-      <p>Upload your designs, track your prints, and bring your ideas to life!</p>
-    </div>
-
-    <div class="quick-actions fade-in">
-      <div class="quick-action-card" id="homeToUpload">
-        <div class="quick-action-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </div>
-        <h3>Upload a Print</h3>
-        <p>Submit your STL file to the print queue</p>
-        <button class="btn btn-primary">Go to Upload</button>
-      </div>
-
-      <div class="quick-action-card" id="homeToTools">
-        <div class="quick-action-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg>
-        </div>
-        <h3>Tools & Resources</h3>
-        <p>Access 3D printing tools and guides</p>
-        <button class="btn btn-primary">View Tools</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Upload Page -->
-  <div class="page-content" id="uploadPage">
-
-  <!-- Upload Page -->
-  <div class="page-content" id="uploadPage">
-    <div class="stats-grid fade-in">
-      <div class="stat-card">
-        <h3>Total Requests</h3>
-        <div class="value" id="totalRequests">0</div>
-      </div>
-      <div class="stat-card pending">
-        <h3>Pending</h3>
-        <div class="value" id="pendingCount">0</div>
-      </div>
-      <div class="stat-card printing">
-        <h3>Printing Now</h3>
-        <div class="value" id="printingCount">0</div>
-      </div>
-      <div class="stat-card completed">
-        <h3>Completed</h3>
-        <div class="value" id="completedCount">0</div>
-      </div>
-    </div>
-
-    <div class="main-card fade-in">
-      <div class="card-header">
-        <div class="upload-section">
-          <button class="btn btn-primary" id="uploadBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            Upload New Print
-          </button>
-          <div class="file-info">Accepted: <strong>.stl files</strong></div>
-        </div>
-      </div>
-
-      <input type="file" id="fileInput" accept=".stl" style="display: none;">
-      
-      <div class="progress-container" id="progressContainer">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-
-      <div class="tabs">
-        <button class="tab active" id="tabActive">
-          Active (Pending & Printing)
-        </button>
-        <button class="tab" id="tabCompleted">
-          Completed
-        </button>
-      </div>
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>File Name</th>
-              <th>Status</th>
-              <th id="positionHeader">Queue Position</th>
-              <th>Uploaded</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr>
-              <td colspan="4">
-                <div class="empty-state">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                    <polyline points="13 2 13 9 20 9"/>
-                  </svg>
-                  <h3>No prints found</h3>
-                  <p>Upload your first 3D print to get started!</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tools Page -->
-  <div class="page-content" id="toolsPage">
-    <div class="main-card fade-in">
-      <div class="card-header">
-        <h2 class="card-title">Tools & Resources</h2>
-      </div>
-      <div class="empty-state" style="padding: 80px 24px;">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 24px; opacity: 0.2;">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-        </svg>
-        <h3>Coming Soon!</h3>
-        <p>3D printing tools and resources will be available here.</p>
-      </div>
-    </div>
-  </div>
-</div>
+  <div class="stats-grid fade-in">
     <div class="stat-card">
       <h3>Total Requests</h3>
       <div class="value" id="totalRequests">0</div>
@@ -912,7 +592,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let currentTab = 'active';
-let currentPage = 'home';
 
 // DOM Elements
 const welcomeTitle = document.getElementById('welcomeTitle');
@@ -930,19 +609,6 @@ const tabActive = document.getElementById('tabActive');
 const tabCompleted = document.getElementById('tabCompleted');
 const refreshBtn = document.getElementById('refreshBtn');
 const logoutBtn = document.getElementById('logoutBtn');
-const signInBtn = document.getElementById('signInBtn');
-const logoBtn = document.getElementById('logoBtn');
-const positionHeader = document.getElementById('positionHeader');
-
-// Navigation
-const navHome = document.getElementById('navHome');
-const navUpload = document.getElementById('navUpload');
-const navTools = document.getElementById('navTools');
-const homePage = document.getElementById('homePage');
-const uploadPage = document.getElementById('uploadPage');
-const toolsPage = document.getElementById('toolsPage');
-const homeToUpload = document.getElementById('homeToUpload');
-const homeToTools = document.getElementById('homeToTools');
 
 // Utility Functions
 function showToast(message, type = 'info') {
